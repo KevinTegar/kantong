@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { supabase } from './supabase';
 
-// Use relative URL in production, localhost in development
 const getBaseURL = () => {
-  if (import.meta.env.PROD) {
-    return '/api';
-  }
-  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+  // Production: harus pakai VITE_API_BASE_URL (backend URL, bukan relative /api)
+  // Development: fallback ke VITE_API_BASE_URL atau localhost
+  return import.meta.env.VITE_API_BASE_URL
+    ? `${import.meta.env.VITE_API_BASE_URL}/api`
+    : 'http://localhost:3001/api';
 };
 
 export const api = axios.create({
