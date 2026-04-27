@@ -110,7 +110,7 @@ export default function ReportsPage() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Category Breakdown */}
-        <div className="card p-6">
+        <div className="card min-w-0 p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-primary-100 rounded-xl">
               <BarChart3 className="w-5 h-5 text-primary-600" />
@@ -125,7 +125,7 @@ export default function ReportsPage() {
               <p>Belum ada data pengeluaran</p>
             </div>
           ) : (
-            <div className="h-64">
+            <div className="h-64 min-h-[16rem] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -161,7 +161,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Weekly Trends */}
-        <div className="card p-6">
+        <div className="card min-w-0 p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-primary-100 rounded-xl">
               <TrendingUp className="w-5 h-5 text-primary-600" />
@@ -176,7 +176,7 @@ export default function ReportsPage() {
               <p>Belum ada data</p>
             </div>
           ) : (
-            <div className="h-64">
+            <div className="h-64 min-h-[16rem] w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyData} barGap={8}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
