@@ -2,6 +2,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useTransactions } from '../../hooks/useTransactions';
 import { formatIDR } from '../../lib/formatCurrency';
 import { TrendingUp } from 'lucide-react';
+import ChartSurface from './ChartSurface';
 
 export default function SpendingChart() {
   const { data: transactions } = useTransactions();
@@ -56,7 +57,7 @@ export default function SpendingChart() {
   }
 
   return (
-    <div className="card p-4 sm:p-6">
+    <div className="card min-w-0 p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary-100 rounded-lg">
@@ -78,7 +79,7 @@ export default function SpendingChart() {
           </div>
         </div>
       </div>
-      <div className="h-48 sm:h-64">
+      <ChartSurface className="h-48 min-h-[12rem] w-full min-w-0 sm:h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} barGap={4}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
@@ -108,7 +109,7 @@ export default function SpendingChart() {
             <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </ChartSurface>
     </div>
   );
 }

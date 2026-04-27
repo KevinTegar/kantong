@@ -3,6 +3,7 @@ import { useTransactions } from '../../hooks/useTransactions';
 import { useCategories } from '../../hooks/useCategories';
 import { formatIDR } from '../../lib/formatCurrency';
 import { PieChart as PieChartIcon } from 'lucide-react';
+import ChartSurface from './ChartSurface';
 
 export default function CategoryPieChart() {
   const { data: transactions } = useTransactions();
@@ -57,7 +58,7 @@ export default function CategoryPieChart() {
   }
 
   return (
-    <div className="card p-4 sm:p-6">
+    <div className="card min-w-0 p-4 sm:p-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="p-2 bg-primary-100 rounded-lg">
           <PieChartIcon className="w-5 h-5 text-primary-600" />
@@ -67,7 +68,7 @@ export default function CategoryPieChart() {
           <p className="text-sm text-dark-400">Per kategori</p>
         </div>
       </div>
-      <div className="h-48 sm:h-64">
+      <ChartSurface className="h-48 min-h-[12rem] w-full min-w-0 sm:h-64">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -99,7 +100,7 @@ export default function CategoryPieChart() {
             />
           </PieChart>
         </ResponsiveContainer>
-      </div>
+      </ChartSurface>
     </div>
   );
 }
