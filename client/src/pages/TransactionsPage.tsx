@@ -11,7 +11,7 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<TransactionType | ''>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
 
   const { data: transactions, isLoading } = useTransactions();
   const { data: categories } = useCategories();
@@ -46,14 +46,14 @@ export default function TransactionsPage() {
   const handleAddTransaction = async (data: TransactionFormData) => {
     await createTransaction.mutateAsync(data);
     setIsFormOpen(false);
-    setEditingTransaction(null);
+    setEditingTransaction(undefined);
   };
 
   const handleEditTransaction = async (data: TransactionFormData) => {
     if (!editingTransaction) return;
     await updateTransaction.mutateAsync({ id: editingTransaction.id, data });
     setIsFormOpen(false);
-    setEditingTransaction(null);
+    setEditingTransaction(undefined);
   };
 
   const handleDeleteTransaction = async (id: string) => {
@@ -67,7 +67,7 @@ export default function TransactionsPage() {
   };
 
   const openAddForm = () => {
-    setEditingTransaction(null);
+    setEditingTransaction(undefined);
     setIsFormOpen(true);
   };
 
@@ -280,7 +280,7 @@ export default function TransactionsPage() {
           onSubmit={editingTransaction ? handleEditTransaction : handleAddTransaction}
           onClose={() => {
             setIsFormOpen(false);
-            setEditingTransaction(null);
+            setEditingTransaction(undefined);
           }}
           isSubmitting={createTransaction.isPending || updateTransaction.isPending}
         />
