@@ -1,10 +1,47 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, Wallet, BarChart3 } from 'lucide-react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
 import { useDashboardSummary } from '../hooks/useDashboardSummary';
 import { formatIDR } from '../lib/formatCurrency';
+
+interface ChartSurfaceProps {
+  children: ReactNode;
+  className?: string;
+}
+
+function ChartSurface({ children, className = '' }: ChartSurfaceProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    const updateSize = () => {
+      const { width, height } = element.getBoundingClientRect();
+      setIsReady(width > 0 && height > 0);
+    };
+
+    updateSize();
+
+    const frameId = window.requestAnimationFrame(updateSize);
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(element);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className={`h-64 min-h-[16rem] w-full min-w-0 ${className}`}>
+      {isReady ? children : null}
+    </div>
+  );
+}
 
 export default function ReportsPage() {
   const { data: transactions } = useTransactions();
@@ -125,7 +162,7 @@ export default function ReportsPage() {
               <p>Belum ada data pengeluaran</p>
             </div>
           ) : (
-            <div className="h-64 min-h-[16rem] w-full min-w-0">
+            <ChartSurface>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -156,7 +193,7 @@ export default function ReportsPage() {
                   />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
+            </ChartSurface>
           )}
         </div>
 
@@ -176,7 +213,7 @@ export default function ReportsPage() {
               <p>Belum ada data</p>
             </div>
           ) : (
-            <div className="h-64 min-h-[16rem] w-full min-w-0">
+            <ChartSurface>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyData} barGap={8}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
@@ -197,7 +234,7 @@ export default function ReportsPage() {
                   <Bar dataKey="expense" fill="#ef4444" radius={[6, 6, 0, 0]} name="Pengeluaran" />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </ChartSurface>
           )}
         </div>
       </div>
