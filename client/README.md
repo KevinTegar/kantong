@@ -17,20 +17,31 @@ Set these in Vercel dashboard (Project Settings > Environment Variables):
 | `VITE_SUPABASE_URL` | Your Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
 
-### Backend API
+### Frontend project
 
-The frontend requires a backend API. Options:
+Deploy the `/client` folder as its own Vercel project.
 
-#### Option 1: Deploy to Railway/Render
-1. Deploy the `/server` folder to Railway or Render
-2. Set environment variables on that platform:
-   - `PORT=3001`
-   - `SUPABASE_URL` = Your Supabase URL
-   - `SUPABASE_SERVICE_ROLE_KEY` = Your Supabase service role key
-   - `CLIENT_ORIGIN` = Your Vercel URL (e.g., `https://kantong.vercel.app`)
+This repo includes `client/vercel.json` so React routes like `/dashboard` are rewritten to `index.html` and reloads do not 404.
 
-#### Option 2: Convert to Vercel Serverless Functions
-Move server endpoints to Vercel serverless functions.
+Set this environment variable in the frontend project:
+
+| Name | Value |
+|-------|-------|
+| `VITE_API_BASE_URL` | Your backend Vercel URL, for example `https://kantong-api.vercel.app` |
+
+### Backend project
+
+Deploy the `/server` folder as its own Vercel project.
+
+This repo includes a catch-all Vercel function entrypoint at `server/api/[...path].ts` so routes like `/api/health` and `/api/transactions` work correctly in production.
+
+Set these environment variables in the backend project:
+
+| Name | Value |
+|-------|-------|
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key |
+| `CLIENT_ORIGIN` | Your frontend Vercel URL, or a comma-separated list of allowed origins |
 
 ### Deployment Steps
 
@@ -56,14 +67,14 @@ vercel --prod
 
 ## Local Development
 
-1. Copy `.env.example` to `.env` and fill in your values
+1. Copy `client/.env.example` to `client/.env` and `server/.env.example` to `server/.env`
 2. Run the server:
 ```bash
 cd server && npm run dev
 ```
 3. Run the client:
 ```bash
-npm run dev
+cd client && npm run dev
 ```
 
 ## Tech Stack

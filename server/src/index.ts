@@ -9,9 +9,26 @@ import categoriesRouter from './routes/categories';
 
 const app = express();
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+const PORT = Number(process.env.PORT || 3001);
+
+function parseAllowedOrigins(value: string): string[] {
+  return value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+const allowedOrigins = parseAllowedOrigins(CLIENT_ORIGIN);
 
 app.use(cors({
-  origin: CLIENT_ORIGIN,
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`Origin ${origin} is not allowed by CORS`));
+  },
   credentials: true,
 }));
 
@@ -25,5 +42,10 @@ app.use('/api/alerts', alertsRouter);
 app.use('/api/transactions', transactionsRouter);
 app.use('/api/categories', categoriesRouter);
 
-// Export for Vercel serverless
-module.exports = app;
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`API server listening on port ${PORT}`);
+  });
+}
+
+export default app;

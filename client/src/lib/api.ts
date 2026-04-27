@@ -1,14 +1,30 @@
 import axios from 'axios';
 import { supabase } from './supabase';
 
+const LOCAL_API_URL = 'http://localhost:3001/api';
+
+function normalizeApiBaseUrl(baseUrl: string) {
+  const trimmed = baseUrl.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+}
+
 const getBaseURL = () => {
-  // If VITE_API_BASE_URL ends with /api, use it directly
-  // Otherwise append /api
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
   if (baseUrl) {
-    return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+    return normalizeApiBaseUrl(baseUrl);
   }
-  return 'http://localhost:3001/api';
+
+  if (typeof window !== 'undefined') {
+    const { hostname, origin } = window.location;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+    if (!isLocalhost) {
+      return `${origin}/api`;
+    }
+  }
+
+  return LOCAL_API_URL;
 };
 
 export const api = axios.create({
