@@ -3,6 +3,7 @@ import 'dotenv/config';
 
 import express from 'express';
 import cors from 'cors';
+import serverless from 'serverless-http';
 import alertsRouter from './routes/alerts';
 import transactionsRouter from './routes/transactions';
 import categoriesRouter from './routes/categories';
@@ -34,4 +35,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Export for Vercel serverless
-export default app;
+const handler = serverless(app);
+export { handler };
+export default handler;
