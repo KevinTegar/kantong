@@ -1,20 +1,23 @@
 import { useState, useMemo } from 'react';
-import { Search, Plus, ChevronDown, TrendingUp, TrendingDown, Filter } from 'lucide-react';
-import { useTransactions, useCreateTransaction } from '../hooks/useTransactions';
+import { Search, Plus, ChevronDown, TrendingUp, TrendingDown, Filter, Pencil, Trash2 } from 'lucide-react';
+import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
 import { formatIDR } from '../lib/formatCurrency';
 import TransactionForm from '../components/transactions/TransactionForm';
-import type { TransactionType, TransactionFormData } from '../types';
+import type { TransactionType, TransactionFormData, Transaction } from '../types';
 
 export default function TransactionsPage() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<TransactionType | ''>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const { data: transactions, isLoading } = useTransactions();
   const { data: categories } = useCategories();
   const createTransaction = useCreateTransaction();
+  const updateTransaction = useUpdateTransaction();
+  const deleteTransaction = useDeleteTransaction();
 
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
@@ -43,6 +46,29 @@ export default function TransactionsPage() {
   const handleAddTransaction = async (data: TransactionFormData) => {
     await createTransaction.mutateAsync(data);
     setIsFormOpen(false);
+    setEditingTransaction(null);
+  };
+
+  const handleEditTransaction = async (data: TransactionFormData) => {
+    if (!editingTransaction) return;
+    await updateTransaction.mutateAsync({ id: editingTransaction.id, data });
+    setIsFormOpen(false);
+    setEditingTransaction(null);
+  };
+
+  const handleDeleteTransaction = async (id: string) => {
+    if (!confirm('Yakin ingin menghapus transaksi ini?')) return;
+    await deleteTransaction.mutateAsync(id);
+  };
+
+  const openEditForm = (tx: Transaction) => {
+    setEditingTransaction(tx);
+    setIsFormOpen(true);
+  };
+
+  const openAddForm = () => {
+    setEditingTransaction(null);
+    setIsFormOpen(true);
   };
 
   return (
@@ -54,7 +80,7 @@ export default function TransactionsPage() {
           <p className="text-dark-400 mt-1">Kelola semua transaksi keuanganmu</p>
         </div>
         <button
-          onClick={() => setIsFormOpen(true)}
+          onClick={openAddForm}
           className="btn-primary inline-flex items-center gap-2 self-start"
         >
           <Plus className="w-5 h-5" />
@@ -166,7 +192,7 @@ export default function TransactionsPage() {
                 : 'Coba ubah filter pencarian'}
             </p>
             {transactions?.length === 0 && (
-              <button onClick={() => setIsFormOpen(true)} className="btn-primary inline-flex items-center gap-2">
+              <button onClick={openAddForm} className="btn-primary inline-flex items-center gap-2">
                 <Plus className="w-5 h-5" />
                 Tambah Transaksi
               </button>
@@ -177,7 +203,7 @@ export default function TransactionsPage() {
             {filteredTransactions.map((tx) => (
               <div
                 key={tx.id}
-                className="p-4 hover:bg-dark-50 transition-colors cursor-pointer group"
+                className="p-4 hover:bg-dark-50 transition-colors group"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -187,13 +213,13 @@ export default function TransactionsPage() {
                       }`}
                     >
                       {tx.type === 'income' ? (
-                        <TrendingUp className={`w-6 h-6 ${tx.type === 'income' ? 'text-success-600' : 'text-danger-600'}`} />
+                        <TrendingUp className="w-6 h-6 text-success-600" />
                       ) : (
                         <TrendingDown className="w-6 h-6 text-danger-600" />
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-dark-800 group-hover:text-primary-600 transition-colors">
+                      <p className="font-medium text-dark-800">
                         {tx.description || (tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran')}
                       </p>
                       <div className="flex items-center gap-3 text-sm text-dark-400">
@@ -216,11 +242,29 @@ export default function TransactionsPage() {
                       </div>
                     </div>
                   </div>
-                  <p className={`font-bold text-lg ${
-                    tx.type === 'income' ? 'text-success-600' : 'text-danger-600'
-                  }`}>
-                    {tx.type === 'income' ? '+' : '-'}{formatIDR(tx.amount)}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <p className={`font-bold text-lg ${
+                      tx.type === 'income' ? 'text-success-600' : 'text-danger-600'
+                    }`}>
+                      {tx.type === 'income' ? '+' : '-'}{formatIDR(tx.amount)}
+                    </p>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openEditForm(tx)}
+                        className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTransaction(tx.id)}
+                        className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                        title="Hapus"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -228,13 +272,17 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      {/* Add Transaction Modal */}
+      {/* Transaction Modal */}
       {isFormOpen && categories && (
         <TransactionForm
           categories={categories}
-          onSubmit={handleAddTransaction}
-          onClose={() => setIsFormOpen(false)}
-          isSubmitting={createTransaction.isPending}
+          transaction={editingTransaction}
+          onSubmit={editingTransaction ? handleEditTransaction : handleAddTransaction}
+          onClose={() => {
+            setIsFormOpen(false);
+            setEditingTransaction(null);
+          }}
+          isSubmitting={createTransaction.isPending || updateTransaction.isPending}
         />
       )}
     </div>

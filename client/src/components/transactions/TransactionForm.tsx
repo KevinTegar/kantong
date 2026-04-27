@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { X, Check, TrendingUp, TrendingDown } from 'lucide-react';
-import type { Category, TransactionFormData } from '../../types';
+import { X, Check, TrendingUp, TrendingDown, Pencil } from 'lucide-react';
+import type { Category, TransactionFormData, Transaction } from '../../types';
 
 interface TransactionFormProps {
   categories: Category[];
+  transaction?: Transaction;
   onSubmit: (data: TransactionFormData) => Promise<void>;
   onClose: () => void;
   isSubmitting?: boolean;
@@ -11,6 +12,7 @@ interface TransactionFormProps {
 
 export default function TransactionForm({
   categories,
+  transaction,
   onSubmit,
   onClose,
   isSubmitting,
@@ -18,11 +20,11 @@ export default function TransactionForm({
   const today = new Date().toISOString().split('T')[0];
 
   const [formData, setFormData] = useState<TransactionFormData>({
-    type: 'expense',
-    amount: 0,
-    category_id: null,
-    description: '',
-    date: today,
+    type: transaction?.type || 'expense',
+    amount: transaction?.amount || 0,
+    category_id: transaction?.category_id || null,
+    description: transaction?.description || '',
+    date: transaction?.date || today,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,7 +39,23 @@ export default function TransactionForm({
       <div className="relative bg-white rounded-2xl shadow-elevated w-full max-w-md animate-slide-up">
         <div className="p-6 border-b border-dark-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-dark-900">Tambah Transaksi</h2>
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-xl ${transaction ? 'bg-warning-100' : 'bg-primary-100'}`}>
+                {transaction ? (
+                  <Pencil className="w-5 h-5 text-warning-600" />
+                ) : (
+                  <TrendingDown className="w-5 h-5 text-primary-600" />
+                )}
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-dark-900">
+                  {transaction ? 'Edit Transaksi' : 'Tambah Transaksi'}
+                </h2>
+                <p className="text-sm text-dark-400">
+                  {transaction ? 'Perbarui detail transaksi' : 'Catat transaksi baru'}
+                </p>
+              </div>
+            </div>
             <button
               onClick={onClose}
               className="p-2 text-dark-400 hover:text-dark-600 hover:bg-dark-100 rounded-lg transition-colors"
@@ -144,7 +162,7 @@ export default function TransactionForm({
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               <Check className="w-5 h-5" />
-              {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+              {isSubmitting ? 'Menyimpan...' : (transaction ? 'Simpan' : 'Tambah')}
             </button>
             <button
               type="button"
