@@ -2,11 +2,13 @@ import axios from 'axios';
 import { supabase } from './supabase';
 
 const getBaseURL = () => {
-  // Production: harus pakai VITE_API_BASE_URL (backend URL, bukan relative /api)
-  // Development: fallback ke VITE_API_BASE_URL atau localhost
-  return import.meta.env.VITE_API_BASE_URL
-    ? `${import.meta.env.VITE_API_BASE_URL}/api`
-    : 'http://localhost:3001/api';
+  // If VITE_API_BASE_URL ends with /api, use it directly
+  // Otherwise append /api
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  if (baseUrl) {
+    return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+  }
+  return 'http://localhost:3001/api';
 };
 
 export const api = axios.create({
