@@ -41,29 +41,27 @@ export default function AlertBanner() {
 
   return (
     <div className="card overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-warning-500 to-warning-600 px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="border-b border-dark-200 bg-warning-50/70 px-6 py-5">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <AlertTriangle className="w-5 h-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-warning-100 text-warning-700">
+              <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">Burn Rate Alert</h3>
-              <p className="text-sm text-white/80">{activeAlerts.length} peringatan aktif</p>
+              <h3 className="panel-title">Burn Rate Alert</h3>
+              <p className="panel-caption">{activeAlerts.length} peringatan aktif yang perlu ditinjau.</p>
             </div>
           </div>
           <button
             onClick={handleMarkAllRead}
-            className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl border border-warning-200 bg-white px-3 py-2 text-sm font-semibold text-warning-700 transition-colors hover:bg-warning-50"
           >
-            <CheckCheck className="w-4 h-4" />
+            <CheckCheck className="h-4 w-4" />
             Tandai dibaca
           </button>
         </div>
       </div>
 
-      {/* Alert Stats */}
       <div className="flex divide-x divide-dark-200 border-b border-dark-200">
         {dangerCount > 0 && (
           <div className="flex-1 px-4 py-3 flex items-center gap-2">
@@ -85,7 +83,6 @@ export default function AlertBanner() {
         )}
       </div>
 
-      {/* Alert Cards */}
       <div className="p-4 space-y-3">
         {activeAlerts.map((result) => (
           <AlertCard key={result.category_id} result={result} />

@@ -4,6 +4,7 @@ import { useCategories } from '../../hooks/useCategories';
 import { formatIDR } from '../../lib/formatCurrency';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import ChartSurface from './ChartSurface';
+import PanelHeader from '../ui/PanelHeader';
 
 export default function CategoryPieChart() {
   const { data: transactions } = useTransactions();
@@ -37,20 +38,17 @@ export default function CategoryPieChart() {
 
   if (chartData.length === 0) {
     return (
-      <div className="card p-4 sm:p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-primary-100 rounded-lg">
-            <PieChartIcon className="w-5 h-5 text-primary-600" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-dark-800">Distribusi</h3>
-            <p className="text-sm text-dark-400">Per kategori</p>
-          </div>
-        </div>
-        <div className="h-48 sm:h-64 flex items-center justify-center text-dark-400">
+      <div className="card min-w-0 p-5 sm:p-6">
+        <PanelHeader
+          title="Distribusi Pengeluaran"
+          caption="Porsi pengeluaran berdasarkan kategori aktif."
+          icon={PieChartIcon}
+          className="mb-5"
+        />
+        <div className="surface-muted flex h-48 items-center justify-center text-dark-400 sm:h-64">
           <div className="text-center">
-            <p className="text-sm font-medium">Belum ada data</p>
-            <p className="text-xs">Tambahkan pengeluaran untuk melihat distribusi</p>
+            <p className="text-sm font-semibold text-dark-700">Belum ada data</p>
+            <p className="mt-1 text-xs">Tambahkan pengeluaran untuk membaca komposisi kategori.</p>
           </div>
         </div>
       </div>
@@ -58,17 +56,14 @@ export default function CategoryPieChart() {
   }
 
   return (
-    <div className="card min-w-0 p-4 sm:p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-primary-100 rounded-lg">
-          <PieChartIcon className="w-5 h-5 text-primary-600" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-dark-800">Distribusi</h3>
-          <p className="text-sm text-dark-400">Per kategori</p>
-        </div>
-      </div>
-      <ChartSurface className="h-48 min-h-[12rem] w-full min-w-0 sm:h-64">
+    <div className="card min-w-0 p-5 sm:p-6">
+      <PanelHeader
+        title="Distribusi Pengeluaran"
+        caption="Lihat kategori paling dominan dalam pengeluaranmu."
+        icon={PieChartIcon}
+        className="mb-5"
+      />
+      <ChartSurface className="surface-muted h-52 min-h-[13rem] w-full min-w-0 p-3 sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

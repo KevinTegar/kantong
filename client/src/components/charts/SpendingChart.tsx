@@ -3,6 +3,7 @@ import { useTransactions } from '../../hooks/useTransactions';
 import { formatIDR } from '../../lib/formatCurrency';
 import { TrendingUp } from 'lucide-react';
 import ChartSurface from './ChartSurface';
+import PanelHeader from '../ui/PanelHeader';
 
 export default function SpendingChart() {
   const { data: transactions } = useTransactions();
@@ -36,20 +37,17 @@ export default function SpendingChart() {
 
   if (!transactions || transactions.length === 0) {
     return (
-      <div className="card p-4 sm:p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-primary-100 rounded-lg">
-            <TrendingUp className="w-5 h-5 text-primary-600" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-dark-800">Grafik Harian</h3>
-            <p className="text-sm text-dark-400">Bulan ini</p>
-          </div>
-        </div>
-        <div className="h-48 sm:h-64 flex items-center justify-center text-dark-400">
+      <div className="card min-w-0 p-5 sm:p-6">
+        <PanelHeader
+          title="Tren Cashflow Harian"
+          caption="Pemasukan dan pengeluaran selama bulan berjalan."
+          icon={TrendingUp}
+          className="mb-5"
+        />
+        <div className="surface-muted flex h-48 items-center justify-center text-dark-400 sm:h-64">
           <div className="text-center">
-            <p className="text-sm font-medium">Belum ada data</p>
-            <p className="text-xs">Tambahkan transaksi untuk melihat grafik</p>
+            <p className="text-sm font-semibold text-dark-700">Belum ada data</p>
+            <p className="mt-1 text-xs">Tambahkan transaksi untuk melihat pergerakan harian.</p>
           </div>
         </div>
       </div>
@@ -57,29 +55,26 @@ export default function SpendingChart() {
   }
 
   return (
-    <div className="card min-w-0 p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-100 rounded-lg">
-            <TrendingUp className="w-5 h-5 text-primary-600" />
+    <div className="card min-w-0 p-5 sm:p-6">
+      <PanelHeader
+        title="Tren Cashflow Harian"
+        caption="Lihat ritme pemasukan dan pengeluaran per hari."
+        icon={TrendingUp}
+        className="mb-5"
+        aside={(
+          <div className="flex items-center gap-4 rounded-full bg-dark-50 px-3 py-2 text-xs">
+            <div className="flex items-center gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-success-500" />
+              <span className="text-dark-500">Pemasukan</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-danger-500" />
+              <span className="text-dark-500">Pengeluaran</span>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-dark-800">Grafik Harian</h3>
-            <p className="text-sm text-dark-400">Bulan ini</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-success-500" />
-            <span className="text-dark-500">Pemasukan</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-danger-500" />
-            <span className="text-dark-500">Pengeluaran</span>
-          </div>
-        </div>
-      </div>
-      <ChartSurface className="h-48 min-h-[12rem] w-full min-w-0 sm:h-64">
+        )}
+      />
+      <ChartSurface className="surface-muted h-52 min-h-[13rem] w-full min-w-0 p-3 sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} barGap={4}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />

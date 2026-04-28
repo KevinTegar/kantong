@@ -24,6 +24,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const { signOut, user } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const currentNav = navItems.find((item) => item.path === location.pathname);
 
   const handleLogout = async () => {
     await signOut();
@@ -31,21 +32,26 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-100">
+    <div className="min-h-screen bg-transparent">
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-dark-200 z-50 px-4">
-        <div className="h-full flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-              <Wallet className="w-5 h-5 text-white" />
+      <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/70 bg-white/85 backdrop-blur-xl lg:hidden">
+        <div className="flex h-16 items-center justify-between px-4">
+          <Link to="/dashboard" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-600 shadow-soft">
+              <Wallet className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-dark-900">Kantong</span>
+            <div>
+              <p className="text-base font-bold tracking-tight text-dark-900">Kantong</p>
+              <p className="text-[11px] font-medium text-dark-400">
+                {currentNav?.label ?? 'Dashboard'}
+              </p>
+            </div>
           </Link>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-10 h-10 flex items-center justify-center text-dark-600 hover:bg-dark-100 rounded-lg transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-dark-200 text-dark-600 transition-colors hover:bg-dark-50"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </header>
@@ -53,50 +59,58 @@ export default function AppLayout() {
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-dark-900/60 z-40 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-dark-900/35 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Mobile Sidebar */}
       <aside
-        className={`lg:hidden fixed top-0 left-0 h-full w-72 bg-white z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 z-50 h-full w-80 border-r border-white/70 bg-white/95 px-4 pb-4 pt-5 shadow-elevated backdrop-blur-xl transition-transform duration-300 ease-in-out lg:hidden ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-dark-200 bg-gradient-to-r from-primary-600 to-primary-700">
-          <Link to="/dashboard" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-            <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
-              <Wallet className="w-5 h-5 text-white" />
+        <div className="mb-6 flex items-center justify-between border-b border-dark-200 pb-5">
+          <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 shadow-soft">
+              <Wallet className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-white">Kantong</span>
+            <div>
+              <p className="text-lg font-bold tracking-tight text-dark-900">Kantong</p>
+              <p className="text-xs text-dark-400">Money control workspace</p>
+            </div>
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}
-            className="w-10 h-10 flex items-center justify-center text-white/80 hover:bg-white/10 rounded-lg transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-dark-200 text-dark-500 transition-colors hover:bg-dark-50"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* User Info */}
-        <div className="p-4">
-          <div className="flex items-center gap-3 p-3 bg-dark-100 rounded-xl">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+        <div className="mb-5 rounded-2xl border border-dark-200 bg-dark-50 p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 text-sm font-semibold text-white">
               {user?.email?.[0]?.toUpperCase() || 'U'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-dark-800 truncate">
+              <p className="text-sm font-semibold text-dark-800 truncate">
                 {user?.email?.split('@')[0] || 'User'}
               </p>
-              <p className="text-xs text-dark-400 truncate">{user?.email}</p>
+              <p className="text-xs text-dark-500 truncate">{user?.email}</p>
             </div>
+          </div>
+          <div className="mt-4 rounded-xl bg-white px-3 py-2 text-xs font-medium text-dark-500 shadow-soft">
+            Fokus bulan ini: pantau cashflow dan budget kategori.
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="px-4 py-2">
-          <p className="text-[10px] font-semibold text-dark-400 uppercase tracking-wider mb-2 px-3">Menu</p>
+        <nav className="px-1 py-1">
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-400">
+            Navigasi
+          </p>
           <ul className="space-y-1">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -105,14 +119,14 @@ export default function AppLayout() {
                   <Link
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
-                        : 'text-dark-600 hover:bg-dark-100'
+                        ? 'bg-primary-600 text-white shadow-soft'
+                        : 'text-dark-600 hover:bg-dark-50'
                     }`}
                   >
-                    <item.icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
+                    <item.icon className="h-5 w-5" />
+                    <span className="font-semibold">{item.label}</span>
                   </Link>
                 </li>
               );
@@ -121,51 +135,62 @@ export default function AppLayout() {
         </nav>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-dark-200">
+        <div className="absolute bottom-4 left-4 right-4 border-t border-dark-200 pt-4">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-dark-500 hover:bg-danger-50 hover:text-danger-600 rounded-xl transition-colors"
+            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-dark-500 transition-colors hover:bg-danger-50 hover:text-danger-600"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Keluar</span>
+            <LogOut className="h-5 w-5" />
+            <span className="font-semibold">Keluar</span>
           </button>
         </div>
       </aside>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-dark-200">
+      <aside className="hidden border-r border-white/80 bg-white/90 backdrop-blur-xl lg:fixed lg:inset-y-0 lg:flex lg:w-[292px] lg:flex-col">
         {/* Logo */}
-        <div className="h-20 flex items-center px-6 border-b border-dark-200">
+        <div className="flex h-24 items-center border-b border-dark-200 px-6">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-md">
-              <Wallet className="w-6 h-6 text-white" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-600 shadow-soft">
+              <Wallet className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
-                Kantong
-              </h1>
+              <h1 className="text-xl font-bold tracking-tight text-dark-900">Kantong</h1>
+              <p className="text-xs font-medium text-dark-400">Focused money tracker</p>
             </div>
           </Link>
         </div>
 
         {/* User Profile */}
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3 p-3 bg-dark-100 rounded-xl">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+        <div className="px-4 py-5">
+          <div className="rounded-2xl border border-dark-200 bg-dark-50 p-4 shadow-soft">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 text-sm font-semibold text-white">
               {user?.email?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-dark-800">
+                  {user?.email?.split('@')[0] || 'User'}
+                </p>
+                <p className="truncate text-xs text-dark-500">{user?.email}</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-dark-800 truncate">
-                {user?.email?.split('@')[0] || 'User'}
+            <div className="mt-4 rounded-xl bg-white px-3 py-3 shadow-soft">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-400">
+                Momentum
               </p>
-              <p className="text-xs text-dark-400 truncate">{user?.email}</p>
+              <p className="mt-1 text-sm leading-6 text-dark-600">
+                Buka dashboard untuk cek cashflow, budget risk, dan transaksi terbaru.
+              </p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-2 overflow-y-auto">
-          <p className="text-[10px] font-semibold text-dark-400 uppercase tracking-wider mb-2 px-3">Menu</p>
+        <nav className="flex-1 overflow-y-auto px-4 py-2">
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-400">
+            Navigasi
+          </p>
           <ul className="space-y-1">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -173,14 +198,14 @@ export default function AppLayout() {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200 ${
                       isActive
-                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
-                        : 'text-dark-600 hover:bg-dark-100'
+                        ? 'bg-primary-600 text-white shadow-soft'
+                        : 'text-dark-600 hover:bg-dark-50'
                     }`}
                   >
-                    <item.icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
+                    <item.icon className="h-5 w-5" />
+                    <span className="font-semibold">{item.label}</span>
                   </Link>
                 </li>
               );
@@ -189,28 +214,28 @@ export default function AppLayout() {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-dark-200">
+        <div className="border-t border-dark-200 p-4">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-dark-500 hover:bg-danger-50 hover:text-danger-600 rounded-xl transition-colors"
+            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-dark-500 transition-colors hover:bg-danger-50 hover:text-danger-600"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Keluar</span>
+            <LogOut className="h-5 w-5" />
+            <span className="font-semibold">Keluar</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content - Desktop */}
-      <div className="hidden lg:block lg:ml-64">
-        <main className="p-8 min-h-screen">
-          <div className="max-w-7xl mx-auto">
+      <div className="hidden lg:block lg:ml-[292px]">
+        <main className="min-h-screen px-8 py-8 xl:px-10">
+          <div className="mx-auto max-w-[1200px]">
             <Outlet />
           </div>
         </main>
       </div>
 
       {/* Main Content - Mobile */}
-      <div className="lg:hidden pt-16 pb-6 px-4 min-h-screen">
+      <div className="min-h-screen px-4 pb-6 pt-20 lg:hidden">
         <Outlet />
       </div>
     </div>

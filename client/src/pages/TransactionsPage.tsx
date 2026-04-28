@@ -1,9 +1,21 @@
-import { useState, useMemo } from 'react';
-import { Search, Plus, ChevronDown, TrendingUp, TrendingDown, Filter, Pencil, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+  ChevronDown,
+  Filter,
+  Pencil,
+  Plus,
+  ReceiptText,
+  Search,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
 import { formatIDR } from '../lib/formatCurrency';
 import TransactionForm from '../components/transactions/TransactionForm';
+import MetricCard from '../components/ui/MetricCard';
+import PageHeader from '../components/ui/PageHeader';
 import type { TransactionType, TransactionFormData, Transaction } from '../types';
 
 export default function TransactionsPage() {
@@ -23,9 +35,9 @@ export default function TransactionsPage() {
     if (!transactions) return [];
 
     return transactions.filter((tx) => {
-      const matchesSearch = search === '' ||
-        tx.description?.toLowerCase().includes(search.toLowerCase()) ||
-        formatIDR(tx.amount).includes(search);
+      const matchesSearch = search === ''
+        || tx.description?.toLowerCase().includes(search.toLowerCase())
+        || formatIDR(tx.amount).includes(search);
 
       const matchesType = typeFilter === '' || tx.type === typeFilter;
       const matchesCategory = categoryFilter === '' || tx.category_id === categoryFilter;
@@ -42,6 +54,9 @@ export default function TransactionsPage() {
       month: 'short',
     });
   };
+
+  const totalIncome = transactions?.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) || 0;
+  const totalExpense = transactions?.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0) || 0;
 
   const handleAddTransaction = async (data: TransactionFormData) => {
     await createTransaction.mutateAsync(data);
@@ -73,26 +88,45 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-dark-900">Transaksi</h1>
-          <p className="text-dark-400 mt-1">Kelola semua transaksi keuanganmu</p>
-        </div>
-        <button
-          onClick={openAddForm}
-          className="btn-primary inline-flex items-center gap-2 self-start"
-        >
-          <Plus className="w-5 h-5" />
-          Tambah Transaksi
-        </button>
+      <PageHeader
+        eyebrow="Workflow"
+        title="Transaksi"
+        description="Catat, telusuri, dan review pergerakan uang harianmu. Filter tetap dekat dengan daftar supaya proses cek bulanan terasa cepat."
+        action={(
+          <button onClick={openAddForm} className="btn-primary">
+            <Plus className="h-5 w-5" />
+            Tambah Transaksi
+          </button>
+        )}
+      />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <MetricCard
+          label="Pemasukan"
+          value={formatIDR(totalIncome)}
+          icon={TrendingUp}
+          tone="success"
+          description="Total pemasukan yang tercatat untuk daftar aktif."
+        />
+        <MetricCard
+          label="Pengeluaran"
+          value={formatIDR(totalExpense)}
+          icon={TrendingDown}
+          tone="danger"
+          description="Total pengeluaran yang sedang kamu review."
+        />
+        <MetricCard
+          label="Hasil Filter"
+          value={filteredTransactions.length}
+          icon={Filter}
+          description="Jumlah transaksi yang cocok dengan pencarian sekarang."
+        />
       </div>
 
-      {/* Filters */}
-      <div className="card p-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
+      <div className="card p-4 lg:p-5">
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto_auto]">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-dark-400" />
             <input
               type="text"
               placeholder="Cari transaksi..."
@@ -102,166 +136,138 @@ export default function TransactionsPage() {
             />
           </div>
 
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex flex-wrap gap-3">
             <div className="relative">
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value as TransactionType | '')}
-                className="input appearance-none pr-10 min-w-[140px]"
+                className="input min-w-[140px] appearance-none pr-10"
               >
                 <option value="">Semua Tipe</option>
                 <option value="income">Pemasukan</option>
                 <option value="expense">Pengeluaran</option>
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 pointer-events-none" />
+              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-dark-400" />
             </div>
 
             <div className="relative">
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="input appearance-none pr-10 min-w-[160px]"
+                className="input min-w-[160px] appearance-none pr-10"
               >
                 <option value="">Semua Kategori</option>
                 {categories?.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 pointer-events-none" />
+              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-dark-400" />
+            </div>
+          </div>
+
+          <div className="surface-muted flex items-center gap-3 px-4 py-3 text-sm text-dark-500">
+            <Filter className="h-4 w-4 text-dark-400" />
+            Filter membantu kamu fokus ke transaksi yang penting dulu.
+          </div>
+        </div>
+      </div>
+
+      <div className="card overflow-hidden">
+        <div className="border-b border-dark-200 px-5 py-4 lg:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-100 text-primary-700">
+              <ReceiptText className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="panel-title">Daftar Transaksi</h2>
+              <p className="panel-caption">Review detail, nominal, dan kategori dari semua catatanmu.</p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card p-4 flex items-center gap-4">
-          <div className="p-3 bg-success-100 rounded-xl">
-            <TrendingUp className="w-6 h-6 text-success-600" />
-          </div>
-          <div>
-            <p className="text-sm text-dark-400">Total Pemasukan</p>
-            <p className="text-lg font-bold text-success-600">
-              {formatIDR(
-                transactions?.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) || 0
-              )}
-            </p>
-          </div>
-        </div>
-        <div className="card p-4 flex items-center gap-4">
-          <div className="p-3 bg-danger-100 rounded-xl">
-            <TrendingDown className="w-6 h-6 text-danger-600" />
-          </div>
-          <div>
-            <p className="text-sm text-dark-400">Total Pengeluaran</p>
-            <p className="text-lg font-bold text-danger-600">
-              {formatIDR(
-                transactions?.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0) || 0
-              )}
-            </p>
-          </div>
-        </div>
-        <div className="card p-4 flex items-center gap-4">
-          <div className="p-3 bg-primary-100 rounded-xl">
-            <Filter className="w-6 h-6 text-primary-600" />
-          </div>
-          <div>
-            <p className="text-sm text-dark-400">Jumlah Transaksi</p>
-            <p className="text-lg font-bold text-dark-800">{filteredTransactions.length}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Transaction List */}
-      <div className="card overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
-            <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="mx-auto h-8 w-8 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
           </div>
         ) : filteredTransactions.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="w-20 h-20 bg-dark-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-10 h-10 text-dark-400" />
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-dark-100">
+              <Search className="h-10 w-10 text-dark-400" />
             </div>
-            <h3 className="text-lg font-semibold text-dark-700 mb-2">
+            <h3 className="mb-2 text-lg font-semibold text-dark-700">
               {transactions?.length === 0 ? 'Belum ada transaksi' : 'Tidak ada hasil'}
             </h3>
-            <p className="text-dark-400 mb-4">
+            <p className="mb-4 text-dark-400">
               {transactions?.length === 0
-                ? 'Mulai catat transaksi pertamamu'
-                : 'Coba ubah filter pencarian'}
+                ? 'Mulai catat transaksi pertamamu.'
+                : 'Coba ubah kata kunci atau filter yang sedang aktif.'}
             </p>
-            {transactions?.length === 0 && (
-              <button onClick={openAddForm} className="btn-primary inline-flex items-center gap-2">
-                <Plus className="w-5 h-5" />
+            {transactions?.length === 0 ? (
+              <button onClick={openAddForm} className="btn-primary">
+                <Plus className="h-5 w-5" />
                 Tambah Transaksi
               </button>
-            )}
+            ) : null}
           </div>
         ) : (
           <div className="divide-y divide-dark-200">
             {filteredTransactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="p-4 hover:bg-dark-50 transition-colors group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+              <div key={tx.id} className="group px-5 py-4 transition-colors hover:bg-dark-50/60 lg:px-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex min-w-0 items-center gap-4">
                     <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        tx.type === 'income' ? 'bg-success-100' : 'bg-danger-100'
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                        tx.type === 'income' ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-600'
                       }`}
                     >
                       {tx.type === 'income' ? (
-                        <TrendingUp className="w-6 h-6 text-success-600" />
+                        <TrendingUp className="h-6 w-6" />
                       ) : (
-                        <TrendingDown className="w-6 h-6 text-danger-600" />
+                        <TrendingDown className="h-6 w-6" />
                       )}
                     </div>
-                    <div>
-                      <p className="font-medium text-dark-800">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-dark-800">
                         {tx.description || (tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran')}
                       </p>
-                      <div className="flex items-center gap-3 text-sm text-dark-400">
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-dark-400">
                         <span>{formatDate(tx.date)}</span>
-                        {tx.category && (
+                        {tx.category ? (
                           <>
-                            <span>•</span>
-                            <span
-                              className="inline-flex items-center gap-1.5"
-                              style={{ color: tx.category.color }}
-                            >
+                            <span aria-hidden="true">&bull;</span>
+                            <span className="inline-flex items-center gap-1.5" style={{ color: tx.category.color }}>
                               <span
-                                className="w-2 h-2 rounded-full"
+                                className="h-2 w-2 rounded-full"
                                 style={{ backgroundColor: tx.category.color }}
                               />
                               {tx.category.name}
                             </span>
                           </>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <p className={`font-bold text-lg ${
-                      tx.type === 'income' ? 'text-success-600' : 'text-danger-600'
+
+                  <div className="flex items-center justify-between gap-3 lg:justify-end">
+                    <p className={`text-lg font-bold tracking-tight ${
+                      tx.type === 'income' ? 'text-success-700' : 'text-danger-600'
                     }`}>
                       {tx.type === 'income' ? '+' : '-'}{formatIDR(tx.amount)}
                     </p>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 lg:opacity-0 lg:transition-opacity lg:group-hover:opacity-100">
                       <button
                         onClick={() => openEditForm(tx)}
-                        className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                        className="rounded-xl p-2 text-dark-400 transition-colors hover:bg-primary-50 hover:text-primary-600"
                         title="Edit"
                       >
-                        <Pencil className="w-4 h-4" />
+                        <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteTransaction(tx.id)}
-                        className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                        className="rounded-xl p-2 text-dark-400 transition-colors hover:bg-danger-50 hover:text-danger-600"
                         title="Hapus"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -272,8 +278,7 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      {/* Transaction Modal */}
-      {isFormOpen && categories && (
+      {isFormOpen && categories ? (
         <TransactionForm
           categories={categories}
           transaction={editingTransaction}
@@ -284,7 +289,7 @@ export default function TransactionsPage() {
           }}
           isSubmitting={createTransaction.isPending || updateTransaction.isPending}
         />
-      )}
+      ) : null}
     </div>
   );
 }

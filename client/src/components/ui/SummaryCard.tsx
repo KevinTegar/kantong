@@ -5,32 +5,37 @@ interface SummaryCardProps {
   value: string;
   icon: LucideIcon;
   variant?: 'default' | 'income' | 'expense' | 'budget';
+  note?: string;
 }
 
 const variantStyles = {
   default: {
-    wrapper: 'bg-white border-dark-200',
-    iconBg: 'bg-dark-100',
+    wrapper: 'border-dark-200 bg-white/95',
+    iconBg: 'bg-dark-100/80',
     iconColor: 'text-dark-600',
     valueColor: 'text-dark-900',
+    accent: 'bg-dark-300',
   },
   income: {
-    wrapper: 'bg-white border-success-200',
+    wrapper: 'border-success-100 bg-white/95',
     iconBg: 'bg-success-100',
     iconColor: 'text-success-600',
     valueColor: 'text-success-700',
+    accent: 'bg-success-500',
   },
   expense: {
-    wrapper: 'bg-white border-danger-200',
+    wrapper: 'border-danger-100 bg-white/95',
     iconBg: 'bg-danger-100',
     iconColor: 'text-danger-600',
     valueColor: 'text-danger-700',
+    accent: 'bg-danger-500',
   },
   budget: {
-    wrapper: 'bg-white border-primary-200',
+    wrapper: 'border-primary-100 bg-white/95',
     iconBg: 'bg-primary-100',
     iconColor: 'text-primary-600',
     valueColor: 'text-primary-700',
+    accent: 'bg-primary-500',
   },
 };
 
@@ -39,20 +44,27 @@ export default function SummaryCard({
   value,
   icon: Icon,
   variant = 'default',
+  note,
 }: SummaryCardProps) {
   const styles = variantStyles[variant];
 
   return (
-    <div className={`rounded-xl border ${styles.wrapper} p-4 shadow-card`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs sm:text-sm text-dark-400 font-medium truncate">{title}</p>
-          <p className={`text-lg sm:text-xl lg:text-2xl font-bold ${styles.valueColor} mt-1 truncate`}>
+    <div className={`rounded-2xl border p-4 shadow-soft ${styles.wrapper}`}>
+      <div className={`mb-5 h-1.5 w-12 rounded-full ${styles.accent}`} />
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-dark-400">
+            {title}
+          </p>
+          <p className={`mt-2 text-xl font-bold tracking-tight sm:text-2xl ${styles.valueColor}`}>
             {value}
           </p>
+          {note ? (
+            <p className="mt-2 text-xs text-dark-500 sm:text-sm">{note}</p>
+          ) : null}
         </div>
-        <div className={`p-2.5 sm:p-3 rounded-xl ${styles.iconBg} flex-shrink-0`}>
-          <Icon className="w-5 h-5 sm:w-6 sm:h-6 ${styles.iconColor}" />
+        <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${styles.iconBg}`}>
+          <Icon className={`h-5 w-5 ${styles.iconColor}`} />
         </div>
       </div>
     </div>

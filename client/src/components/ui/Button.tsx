@@ -7,15 +7,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles = {
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-200',
-  secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-4 focus:ring-gray-200',
-  danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-4 focus:ring-red-200',
-  ghost: 'bg-transparent text-gray-700 hover:bg-gray-100',
+  primary: 'bg-primary-600 text-white shadow-soft hover:bg-primary-700 focus:ring-4 focus:ring-primary-100',
+  secondary: 'border border-dark-200 bg-white text-dark-700 shadow-soft hover:bg-dark-50 focus:ring-4 focus:ring-primary-100',
+  danger: 'bg-danger-500 text-white shadow-soft hover:bg-danger-600 focus:ring-4 focus:ring-danger-100',
+  ghost: 'bg-transparent text-dark-600 hover:bg-dark-100/80 focus:ring-4 focus:ring-primary-100',
 };
 
 const sizeStyles = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
+  sm: 'px-3 py-2 text-sm',
+  md: 'px-4 py-2.5 text-sm',
   lg: 'px-6 py-3 text-base',
 };
 
@@ -25,8 +25,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={`
-          inline-flex items-center justify-center gap-2 font-medium rounded-xl
-          transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+          inline-flex items-center justify-center gap-2 rounded-xl font-semibold
+          transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50
           ${variantStyles[variant]}
           ${sizeStyles[size]}
           ${className}

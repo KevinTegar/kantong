@@ -10,12 +10,12 @@ export default function CategoryProgressList() {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="animate-pulse">
-            <div className="flex justify-between mb-2">
-              <div className="h-4 bg-dark-200 rounded w-24" />
-              <div className="h-4 bg-dark-200 rounded w-32" />
+          <div key={i} className="surface-muted animate-pulse p-4">
+            <div className="mb-2 flex justify-between">
+              <div className="h-4 w-24 rounded bg-dark-200" />
+              <div className="h-4 w-32 rounded bg-dark-200" />
             </div>
-            <div className="h-2 bg-dark-200 rounded-full" />
+            <div className="h-2 rounded-full bg-dark-200" />
           </div>
         ))}
       </div>
@@ -59,33 +59,48 @@ export default function CategoryProgressList() {
   return (
     <div className="space-y-4">
       {categoriesWithSpending.map((category) => (
-        <div key={category.id} className="group">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 min-w-0">
+        <div key={category.id} className="surface-muted p-4">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
               <div
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: category.color }}
               />
-              <span className="text-sm font-medium text-dark-800 truncate">
+                <span className="truncate text-sm font-semibold text-dark-800">
                 {category.name}
               </span>
+              </div>
+              <p className="mt-1 text-xs text-dark-500">
+                Sisa {formatIDR(Math.max(0, category.spending_cap - category.spent))}
+              </p>
             </div>
-            <span className="text-xs sm:text-sm text-dark-500 flex-shrink-0 ml-2">
+            <span className="ml-2 flex-shrink-0 text-xs font-medium text-dark-500 sm:text-sm">
               {formatIDR(category.spent)} / {formatIDR(category.spending_cap)}
             </span>
           </div>
-          <div className="h-2 bg-dark-100 rounded-full overflow-hidden">
+          <div className="h-2 rounded-full bg-dark-100 overflow-hidden">
             <div
               className={`h-full ${getProgressColor(category.percentage)} transition-all duration-500 rounded-full`}
               style={{ width: `${category.percentage}%` }}
             />
           </div>
-          <div className="flex justify-between items-center mt-1.5">
+          <div className="mt-2 flex items-center justify-between">
             <span className="text-xs text-dark-400">
               {category.percentage.toFixed(0)}% terpakai
             </span>
-            <span className="text-xs text-dark-400">
-              Sisa: {formatIDR(Math.max(0, category.spending_cap - category.spent))}
+            <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+              category.percentage >= 100
+                ? 'bg-danger-50 text-danger-700'
+                : category.percentage >= 85
+                  ? 'bg-warning-50 text-warning-700'
+                  : 'bg-primary-50 text-primary-700'
+            }`}>
+              {category.percentage >= 100
+                ? 'Melebihi cap'
+                : category.percentage >= 85
+                  ? 'Perlu perhatian'
+                  : 'Masih aman'}
             </span>
           </div>
         </div>

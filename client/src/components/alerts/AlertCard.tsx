@@ -41,9 +41,9 @@ export default function AlertCard({ result }: AlertCardProps) {
   const Icon = alert_level === 'DANGER' ? AlertCircle : TrendingUp;
 
   return (
-    <div className={`p-4 rounded-xl border ${config.bg} transition-all hover:shadow-md`}>
+    <div className={`rounded-2xl border p-4 transition-all ${config.bg}`}>
       <div className="flex items-start gap-4">
-        <div className={`p-2.5 rounded-xl ${config.iconBg}`}>
+        <div className={`rounded-2xl p-2.5 ${config.iconBg}`}>
           <Icon className={`w-5 h-5 ${config.iconColor}`} />
         </div>
         <div className="flex-1 min-w-0">
@@ -61,7 +61,7 @@ export default function AlertCard({ result }: AlertCardProps) {
               <span>Progress</span>
               <span>{percentage_projected.toFixed(0)}%</span>
             </div>
-            <div className="h-2 bg-dark-200 rounded-full overflow-hidden">
+            <div className="h-2 overflow-hidden rounded-full bg-dark-200">
               <div
                 className={`h-full ${config.bar} transition-all duration-500`}
                 style={{ width: `${Math.min(100, percentage_projected)}%` }}

@@ -35,12 +35,12 @@ export default function TransactionForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-elevated w-full max-w-md animate-slide-up">
+      <div className="absolute inset-0 bg-dark-900/35 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md overflow-hidden rounded-[22px] border border-white/80 bg-white shadow-elevated animate-slide-up">
         <div className="p-6 border-b border-dark-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${transaction ? 'bg-warning-100' : 'bg-primary-100'}`}>
+              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${transaction ? 'bg-warning-100' : 'bg-primary-100'}`}>
                 {transaction ? (
                   <Pencil className="w-5 h-5 text-warning-600" />
                 ) : (
@@ -51,14 +51,14 @@ export default function TransactionForm({
                 <h2 className="text-lg font-semibold text-dark-900">
                   {transaction ? 'Edit Transaksi' : 'Tambah Transaksi'}
                 </h2>
-                <p className="text-sm text-dark-400">
+                <p className="text-sm text-dark-500">
                   {transaction ? 'Perbarui detail transaksi' : 'Catat transaksi baru'}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-dark-400 hover:text-dark-600 hover:bg-dark-100 rounded-lg transition-colors"
+              className="rounded-xl border border-dark-200 p-2 text-dark-400 transition-colors hover:bg-dark-50 hover:text-dark-600"
             >
               <X className="w-5 h-5" />
             </button>
@@ -66,14 +66,13 @@ export default function TransactionForm({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Type Toggle */}
-          <div className="flex gap-2 p-1 bg-dark-100 rounded-xl">
+          <div className="surface-muted flex gap-2 p-1.5">
             <button
               type="button"
               onClick={() => setFormData({ ...formData, type: 'income' })}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition-all ${
                 formData.type === 'income'
-                  ? 'bg-success-500 text-white shadow-md'
+                  ? 'bg-success-500 text-white shadow-soft'
                   : 'text-dark-500 hover:text-dark-700'
               }`}
             >
@@ -83,9 +82,9 @@ export default function TransactionForm({
             <button
               type="button"
               onClick={() => setFormData({ ...formData, type: 'expense' })}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition-all ${
                 formData.type === 'expense'
-                  ? 'bg-danger-500 text-white shadow-md'
+                  ? 'bg-danger-500 text-white shadow-soft'
                   : 'text-dark-500 hover:text-dark-700'
               }`}
             >
@@ -94,7 +93,6 @@ export default function TransactionForm({
             </button>
           </div>
 
-          {/* Amount */}
           <div>
             <label className="label">Jumlah</label>
             <div className="relative">
@@ -103,7 +101,7 @@ export default function TransactionForm({
                 type="number"
                 value={formData.amount || ''}
                 onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
-                className="input pl-10"
+                className="input pl-10 text-lg font-semibold"
                 placeholder="0"
                 min="1"
                 required
@@ -111,7 +109,6 @@ export default function TransactionForm({
             </div>
           </div>
 
-          {/* Category */}
           <div>
             <label className="label">Kategori</label>
             <select
@@ -126,7 +123,6 @@ export default function TransactionForm({
             </select>
           </div>
 
-          {/* Description */}
           <div>
             <label className="label">Deskripsi</label>
             <input
@@ -138,7 +134,6 @@ export default function TransactionForm({
             />
           </div>
 
-          {/* Date */}
           <div>
             <label className="label">Tanggal</label>
             <input
@@ -150,12 +145,11 @@ export default function TransactionForm({
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <button
               type="submit"
               disabled={isSubmitting || formData.amount <= 0}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold transition-all ${
                 formData.type === 'income'
                   ? 'bg-success-500 hover:bg-success-600 text-white'
                   : 'bg-danger-500 hover:bg-danger-600 text-white'
@@ -167,7 +161,7 @@ export default function TransactionForm({
             <button
               type="button"
               onClick={onClose}
-              className="py-3 px-4 rounded-xl font-medium border border-dark-200 text-dark-600 hover:bg-dark-50 transition-colors"
+              className="rounded-xl border border-dark-200 px-4 py-3 font-medium text-dark-600 transition-colors hover:bg-dark-50 sm:min-w-[112px]"
             >
               Batal
             </button>
