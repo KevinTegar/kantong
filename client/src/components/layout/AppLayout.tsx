@@ -104,9 +104,6 @@ export default function AppLayout() {
               <p className="text-xs text-dark-500 truncate">{user?.email}</p>
             </div>
           </div>
-          <div className="mt-4 rounded-xl bg-white px-3 py-2 text-xs font-medium text-dark-500 shadow-soft">
-            Fokus periode aktif: pantau cashflow dan budget kategori.
-          </div>
         </div>
 
         <MonthHistorySwitcher />
@@ -179,14 +176,6 @@ export default function AppLayout() {
                 </p>
                 <p className="truncate text-xs text-dark-500">{user?.email}</p>
               </div>
-            </div>
-            <div className="mt-4 rounded-xl bg-white px-3 py-3 shadow-soft">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-400">
-                Momentum
-              </p>
-              <p className="mt-1 text-sm leading-6 text-dark-600">
-                Buka dashboard untuk cek cashflow, budget risk, dan transaksi terbaru.
-              </p>
             </div>
           </div>
 

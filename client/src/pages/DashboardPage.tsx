@@ -13,11 +13,13 @@ import AlertBanner from '../components/alerts/AlertBanner';
 import SpendingChart from '../components/charts/SpendingChart';
 import CategoryPieChart from '../components/charts/CategoryPieChart';
 import MonthlyHistoryPanel from '../components/dashboard/MonthlyHistoryPanel';
+import FirstUsePanel from '../components/onboarding/FirstUsePanel';
 import PanelHeader from '../components/ui/PanelHeader';
 import SummaryCard from '../components/ui/SummaryCard';
 import PageHeader from '../components/ui/PageHeader';
 import CategoryProgressList from '../components/transactions/CategoryProgressList';
 import { useSelectedPeriod } from '../hooks/useSelectedPeriod';
+import { useAvailableMonths } from '../hooks/useAvailableMonths';
 import { useCategorySpending, useDashboardSummary } from '../hooks/useDashboardSummary';
 import { useCategories } from '../hooks/useCategories';
 import { useTransactions } from '../hooks/useTransactions';
@@ -27,8 +29,10 @@ export default function DashboardPage() {
   const { month, year, label } = useSelectedPeriod();
   const { totalIncome, totalExpense, balance, isLoading } = useDashboardSummary({ month, year });
   const { data: transactions } = useTransactions({ month, year });
+  const { data: availableMonths } = useAvailableMonths();
   const { data: categories } = useCategories();
   const categorySpending = useCategorySpending({ month, year });
+  const isFirstUse = !isLoading && (availableMonths?.length ?? 0) === 0 && (transactions?.length ?? 0) === 0;
 
   const spentRatio = totalIncome > 0 ? Math.min(100, (totalExpense / totalIncome) * 100) : 0;
 
@@ -86,6 +90,28 @@ export default function DashboardPage() {
           </>
         )}
       />
+
+      {isFirstUse ? (
+        <FirstUsePanel
+          eyebrow="Mulai Pertama Kali"
+          title="Belum ada transaksi, dan itu tidak apa-apa"
+          description="Kantong akan mulai terasa berguna begitu kamu masukkan satu pemasukan dan satu pengeluaran. Dari situ dashboard, histori bulanan, dan laporan akan otomatis membentuk pola yang bisa kamu baca dari bulan ke bulan."
+          highlights={[
+            'Tambahkan kategori dulu kalau kamu ingin pengeluaran langsung rapi per pos.',
+            'Catat pemasukan pertama, misalnya gaji atau dana masuk lainnya.',
+            'Setelah itu masukkan beberapa pengeluaran supaya ritme cashflow mulai terlihat.',
+          ]}
+          actions={[
+            { label: 'Tambah Transaksi', to: '/transactions', icon: Plus },
+            { label: 'Atur Kategori', to: '/categories', variant: 'secondary', icon: PiggyBank },
+          ]}
+          aside={(
+            <div className="rounded-2xl border border-dashed border-dark-200 bg-white/80 px-4 py-3 text-sm leading-6 text-dark-500">
+              Histori bulanan akan muncul otomatis setelah bulan pertama punya transaksi.
+            </div>
+          )}
+        />
+      ) : null}
 
       <section className="card overflow-hidden">
         <div className="grid gap-0 lg:grid-cols-[1.35fr_0.9fr]">
@@ -188,7 +214,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <AlertBanner />
+      {!isFirstUse ? <AlertBanner /> : null}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <SummaryCard
@@ -214,7 +240,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <MonthlyHistoryPanel />
+      {!isFirstUse ? <MonthlyHistoryPanel /> : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Link
@@ -272,14 +298,14 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      {!isLoading ? (
+      {!isLoading && !isFirstUse ? (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           <SpendingChart />
           <CategoryPieChart />
         </div>
       ) : null}
 
-      {!isLoading ? (
+      {!isLoading && !isFirstUse ? (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="card p-5 lg:p-6">
             <PanelHeader

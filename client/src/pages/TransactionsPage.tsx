@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
+import FirstUsePanel from '../components/onboarding/FirstUsePanel';
 import { formatIDR } from '../lib/formatCurrency';
 import TransactionForm from '../components/transactions/TransactionForm';
 import MetricCard from '../components/ui/MetricCard';
@@ -192,25 +193,33 @@ export default function TransactionsPage() {
             <div className="mx-auto h-8 w-8 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
           </div>
         ) : filteredTransactions.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-dark-100">
-              <Search className="h-10 w-10 text-dark-400" />
+          transactions?.length === 0 ? (
+            <div className="p-5 lg:p-6">
+              <FirstUsePanel
+                eyebrow={label}
+                title="Belum ada transaksi di periode ini"
+                description="Mulai dari satu catatan sederhana dulu. Setelah transaksi pertama masuk, daftar ini akan berubah jadi workspace harian untuk review pemasukan dan pengeluaranmu."
+                highlights={[
+                  'Gunakan tanggal yang sesuai supaya histori bulanan nanti tetap rapi.',
+                  'Kamu bisa mulai dari pemasukan dulu, lalu tambahkan pengeluaran yang paling rutin.',
+                  'Kalau mau lebih tertata, buat kategori sebelum mulai input banyak transaksi.',
+                ]}
+                actions={[
+                  { label: 'Tambah Transaksi', onClick: openAddForm, icon: Plus },
+                ]}
+              />
             </div>
-            <h3 className="mb-2 text-lg font-semibold text-dark-700">
-              {transactions?.length === 0 ? 'Belum ada transaksi' : 'Tidak ada hasil'}
-            </h3>
-            <p className="mb-4 text-dark-400">
-              {transactions?.length === 0
-                ? 'Mulai catat transaksi pertamamu.'
-                : 'Coba ubah kata kunci atau filter yang sedang aktif.'}
-            </p>
-            {transactions?.length === 0 ? (
-              <button onClick={openAddForm} className="btn-primary">
-                <Plus className="h-5 w-5" />
-                Tambah Transaksi
-              </button>
-            ) : null}
-          </div>
+          ) : (
+            <div className="p-12 text-center">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-dark-100">
+                <Search className="h-10 w-10 text-dark-400" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-dark-700">Tidak ada hasil</h3>
+              <p className="mb-4 text-dark-400">
+                Coba ubah kata kunci atau filter yang sedang aktif.
+              </p>
+            </div>
+          )
         ) : (
           <div className="divide-y divide-dark-200">
             {filteredTransactions.map((tx) => (
