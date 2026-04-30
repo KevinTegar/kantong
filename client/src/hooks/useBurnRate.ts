@@ -2,11 +2,20 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type { BurnRateResult } from '../types';
 
-export function useBurnRate() {
+interface UseBurnRateOptions {
+  month?: number;
+  year?: number;
+}
+
+export function useBurnRate(options: UseBurnRateOptions = {}) {
   return useQuery<BurnRateResult[]>({
-    queryKey: ['burnRate'],
+    queryKey: ['burnRate', options],
     queryFn: async () => {
-      const response = await api.get<{ data: BurnRateResult[] }>('/alerts/burn-rate');
+      const params = new URLSearchParams();
+      if (options.month) params.append('month', String(options.month));
+      if (options.year) params.append('year', String(options.year));
+
+      const response = await api.get<{ data: BurnRateResult[] }>(`/alerts/burn-rate?${params}`);
       return response.data.data;
     },
     retry: false,

@@ -12,30 +12,29 @@ import { Link } from 'react-router-dom';
 import AlertBanner from '../components/alerts/AlertBanner';
 import SpendingChart from '../components/charts/SpendingChart';
 import CategoryPieChart from '../components/charts/CategoryPieChart';
+import MonthlyHistoryPanel from '../components/dashboard/MonthlyHistoryPanel';
 import PanelHeader from '../components/ui/PanelHeader';
 import SummaryCard from '../components/ui/SummaryCard';
 import PageHeader from '../components/ui/PageHeader';
 import CategoryProgressList from '../components/transactions/CategoryProgressList';
+import { useSelectedPeriod } from '../hooks/useSelectedPeriod';
 import { useCategorySpending, useDashboardSummary } from '../hooks/useDashboardSummary';
 import { useCategories } from '../hooks/useCategories';
 import { useTransactions } from '../hooks/useTransactions';
 import { formatIDR } from '../lib/formatCurrency';
 
 export default function DashboardPage() {
-  const { totalIncome, totalExpense, balance, isLoading } = useDashboardSummary();
-  const { data: transactions } = useTransactions();
+  const { month, year, label } = useSelectedPeriod();
+  const { totalIncome, totalExpense, balance, isLoading } = useDashboardSummary({ month, year });
+  const { data: transactions } = useTransactions({ month, year });
   const { data: categories } = useCategories();
-  const categorySpending = useCategorySpending();
+  const categorySpending = useCategorySpending({ month, year });
 
   const spentRatio = totalIncome > 0 ? Math.min(100, (totalExpense / totalIncome) * 100) : 0;
-  const currentMonthLabel = new Date().toLocaleDateString('id-ID', {
-    month: 'long',
-    year: 'numeric',
-  });
 
   const budgetStatus = balance >= 0
-    ? 'Arus kas bulan ini masih aman. Pertahankan ritme pengeluaranmu.'
-    : 'Pengeluaran sudah melampaui pemasukan bulan ini. Prioritaskan kategori penting.';
+    ? 'Arus kas pada periode ini masih aman. Pertahankan ritme pengeluaranmu.'
+    : 'Pengeluaran pada periode ini sudah melampaui pemasukan. Prioritaskan kategori penting.';
 
   const atRiskCategories = useMemo(() => {
     if (!categories) return [];
@@ -71,9 +70,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        eyebrow="Bulan Ini"
+        eyebrow={label}
         title="Dashboard"
-        description="Pantau cashflow, budget kategori, dan area pengeluaran yang butuh perhatian tanpa kehilangan konteks bulan berjalan."
+        description="Pantau cashflow, budget kategori, dan area pengeluaran yang butuh perhatian tanpa kehilangan konteks bulan yang sedang kamu lihat."
         action={(
           <>
             <Link to="/categories" className="btn-secondary">
@@ -95,10 +94,10 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
                   <span className="h-2 w-2 rounded-full bg-primary-500" />
-                  Ringkasan {currentMonthLabel}
+                  Ringkasan {label}
                 </div>
                 <div>
-                  <p className="text-sm text-dark-500">Saldo bersih bulan berjalan</p>
+                  <p className="text-sm text-dark-500">Saldo bersih periode aktif</p>
                   <h2 className={`mt-2 text-3xl font-bold tracking-tight lg:text-4xl ${
                     balance >= 0 ? 'text-dark-900' : 'text-danger-600'
                   }`}>
@@ -197,7 +196,7 @@ export default function DashboardPage() {
           value={formatIDR(totalIncome)}
           icon={TrendingUp}
           variant="income"
-          note="Dana masuk yang sudah tercatat bulan ini."
+          note="Dana masuk yang sudah tercatat pada periode aktif."
         />
         <SummaryCard
           title="Pengeluaran"
@@ -214,6 +213,8 @@ export default function DashboardPage() {
           note="Ruang aman yang masih tersedia setelah pengeluaran."
         />
       </div>
+
+      <MonthlyHistoryPanel />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Link

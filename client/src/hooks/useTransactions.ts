@@ -9,19 +9,21 @@ interface UseTransactionsOptions {
   type?: 'income' | 'expense';
 }
 
+export async function fetchTransactions(options: UseTransactionsOptions = {}) {
+  const params = new URLSearchParams();
+  if (options.month) params.append('month', String(options.month));
+  if (options.year) params.append('year', String(options.year));
+  if (options.category_id) params.append('category_id', options.category_id);
+  if (options.type) params.append('type', options.type);
+
+  const response = await api.get<{ data: Transaction[] }>(`/transactions?${params}`);
+  return response.data.data;
+}
+
 export function useTransactions(options: UseTransactionsOptions = {}) {
   return useQuery<Transaction[]>({
     queryKey: ['transactions', options],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (options.month) params.append('month', String(options.month));
-      if (options.year) params.append('year', String(options.year));
-      if (options.category_id) params.append('category_id', options.category_id);
-      if (options.type) params.append('type', options.type);
-
-      const response = await api.get<{ data: Transaction[] }>(`/transactions?${params}`);
-      return response.data.data;
-    },
+    queryFn: async () => fetchTransactions(options),
     retry: false,
     enabled: Boolean(import.meta.env.VITE_SUPABASE_URL),
   });
@@ -37,6 +39,7 @@ export function useCreateTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactionMonths'] });
       queryClient.invalidateQueries({ queryKey: ['burnRate'] });
     },
   });
@@ -52,6 +55,7 @@ export function useUpdateTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactionMonths'] });
       queryClient.invalidateQueries({ queryKey: ['burnRate'] });
     },
   });
@@ -66,6 +70,7 @@ export function useDeleteTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactionMonths'] });
       queryClient.invalidateQueries({ queryKey: ['burnRate'] });
     },
   });

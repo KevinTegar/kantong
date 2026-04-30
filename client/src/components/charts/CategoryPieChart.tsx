@@ -1,4 +1,5 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useSelectedPeriod } from '../../hooks/useSelectedPeriod';
 import { useTransactions } from '../../hooks/useTransactions';
 import { useCategories } from '../../hooks/useCategories';
 import { formatIDR } from '../../lib/formatCurrency';
@@ -7,7 +8,8 @@ import ChartSurface from './ChartSurface';
 import PanelHeader from '../ui/PanelHeader';
 
 export default function CategoryPieChart() {
-  const { data: transactions } = useTransactions();
+  const { month, year } = useSelectedPeriod();
+  const { data: transactions } = useTransactions({ month, year });
   const { data: categories } = useCategories();
 
   const chartData = (() => {

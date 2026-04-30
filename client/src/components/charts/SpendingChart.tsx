@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useSelectedPeriod } from '../../hooks/useSelectedPeriod';
 import { useTransactions } from '../../hooks/useTransactions';
 import { formatIDR } from '../../lib/formatCurrency';
 import { TrendingUp } from 'lucide-react';
@@ -6,7 +7,8 @@ import ChartSurface from './ChartSurface';
 import PanelHeader from '../ui/PanelHeader';
 
 export default function SpendingChart() {
-  const { data: transactions } = useTransactions();
+  const { month, year } = useSelectedPeriod();
+  const { data: transactions } = useTransactions({ month, year });
 
   const chartData = (() => {
     if (!transactions || transactions.length === 0) return [];
@@ -40,7 +42,7 @@ export default function SpendingChart() {
       <div className="card min-w-0 p-5 sm:p-6">
         <PanelHeader
           title="Tren Cashflow Harian"
-          caption="Pemasukan dan pengeluaran selama bulan berjalan."
+          caption="Pemasukan dan pengeluaran selama periode aktif."
           icon={TrendingUp}
           className="mb-5"
         />

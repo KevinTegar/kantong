@@ -1,10 +1,12 @@
 import { AlertTriangle, CheckCheck } from 'lucide-react';
 import { useBurnRate } from '../../hooks/useBurnRate';
+import { useSelectedPeriod } from '../../hooks/useSelectedPeriod';
 import AlertCard from './AlertCard';
 import { api } from '../../lib/api';
 
 export default function AlertBanner() {
-  const { data: burnRateResults, isLoading, refetch } = useBurnRate();
+  const { month, year, isCurrentPeriod } = useSelectedPeriod();
+  const { data: burnRateResults, isLoading, refetch } = useBurnRate({ month, year });
 
   const activeAlerts = burnRateResults?.filter((r) => r.alert_level !== null) ?? [];
 
@@ -49,7 +51,11 @@ export default function AlertBanner() {
             </div>
             <div>
               <h3 className="panel-title">Burn Rate Alert</h3>
-              <p className="panel-caption">{activeAlerts.length} peringatan aktif yang perlu ditinjau.</p>
+              <p className="panel-caption">
+                {isCurrentPeriod
+                  ? `${activeAlerts.length} peringatan aktif yang perlu ditinjau.`
+                  : `${activeAlerts.length} hasil proyeksi dari periode yang sedang kamu lihat.`}
+              </p>
             </div>
           </div>
           <button

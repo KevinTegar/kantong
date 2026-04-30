@@ -7,8 +7,13 @@ interface SummaryData {
   balance: number;
 }
 
-export function useDashboardSummary(): SummaryData & { isLoading: boolean } {
-  const { data: transactions, isLoading } = useTransactions();
+interface SummaryOptions {
+  month?: number;
+  year?: number;
+}
+
+export function useDashboardSummary(options: SummaryOptions = {}): SummaryData & { isLoading: boolean } {
+  const { data: transactions, isLoading } = useTransactions(options);
 
   return useMemo(() => {
     if (!transactions) {
@@ -32,8 +37,8 @@ export function useDashboardSummary(): SummaryData & { isLoading: boolean } {
   }, [transactions, isLoading]);
 }
 
-export function useCategorySpending(): Map<string, number> {
-  const { data: transactions } = useTransactions();
+export function useCategorySpending(options: SummaryOptions = {}): Map<string, number> {
+  const { data: transactions } = useTransactions(options);
 
   return useMemo(() => {
     const spending = new Map<string, number>();

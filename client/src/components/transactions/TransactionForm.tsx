@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { X, Check, TrendingUp, TrendingDown, Pencil } from 'lucide-react';
+import { buildPeriodDate, getCurrentPeriod } from '../../lib/period';
 import type { Category, TransactionFormData, Transaction } from '../../types';
 
 interface TransactionFormProps {
   categories: Category[];
   transaction?: Transaction;
+  selectedMonth: number;
+  selectedYear: number;
   onSubmit: (data: TransactionFormData) => Promise<void>;
   onClose: () => void;
   isSubmitting?: boolean;
@@ -13,18 +16,24 @@ interface TransactionFormProps {
 export default function TransactionForm({
   categories,
   transaction,
+  selectedMonth,
+  selectedYear,
   onSubmit,
   onClose,
   isSubmitting,
 }: TransactionFormProps) {
-  const today = new Date().toISOString().split('T')[0];
+  const currentPeriod = getCurrentPeriod();
+  const today = new Date();
+  const defaultDate = selectedMonth === currentPeriod.month && selectedYear === currentPeriod.year
+    ? today.toISOString().split('T')[0]
+    : buildPeriodDate({ month: selectedMonth, year: selectedYear }, today.getDate());
 
   const [formData, setFormData] = useState<TransactionFormData>({
     type: transaction?.type || 'expense',
     amount: transaction?.amount || 0,
     category_id: transaction?.category_id || null,
     description: transaction?.description || '',
-    date: transaction?.date || today,
+    date: transaction?.date || defaultDate,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -13,6 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import { BarChart3, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { useSelectedPeriod } from '../hooks/useSelectedPeriod';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
 import { useDashboardSummary } from '../hooks/useDashboardSummary';
@@ -23,9 +24,10 @@ import PanelHeader from '../components/ui/PanelHeader';
 import PageHeader from '../components/ui/PageHeader';
 
 export default function ReportsPage() {
-  const { data: transactions } = useTransactions();
+  const { month, year, label } = useSelectedPeriod();
+  const { data: transactions } = useTransactions({ month, year });
   const { data: categories } = useCategories();
-  const { totalIncome, totalExpense, balance } = useDashboardSummary();
+  const { totalIncome, totalExpense, balance } = useDashboardSummary({ month, year });
 
   const categoryBreakdown = useMemo(() => {
     if (!transactions || !categories) return [];
@@ -80,15 +82,15 @@ export default function ReportsPage() {
   const topCategory = categoryBreakdown[0];
   const spendVsIncome = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
   const reviewStatus = balance >= 0
-    ? 'Bulan ini masih terkendali. Fokus utama ada di kategori yang paling cepat naik.'
-    : 'Pengeluaran bulan ini lebih tinggi dari pemasukan. Perlu review kategori dan cap secara lebih ketat.';
+    ? 'Periode ini masih terkendali. Fokus utama ada di kategori yang paling cepat naik.'
+    : 'Pengeluaran pada periode ini lebih tinggi dari pemasukan. Perlu review kategori dan cap secara lebih ketat.';
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        eyebrow="Monthly Review"
+        eyebrow={label}
         title="Laporan"
-        description="Baca pola pengeluaran, komposisi kategori, dan efisiensi budget bulan ini dalam satu permukaan yang lebih analitis."
+        description="Baca pola pengeluaran, komposisi kategori, dan efisiensi budget untuk bulan yang sedang aktif dalam satu permukaan yang lebih analitis."
       />
 
       <section className="card overflow-hidden">

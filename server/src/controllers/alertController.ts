@@ -6,12 +6,16 @@ import type { AuthenticatedRequest } from '../middleware/auth';
 export async function getBurnRate(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const userId = req.userId!;
+    const { month, year } = req.query;
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    const queryYear = year ? Number(year) : now.getFullYear();
+    const queryMonth = month ? Number(month) : now.getMonth() + 1;
 
-    const results = await calculateBurnRate(userId, year, month);
-    await saveAlerts(userId, results);
+    const results = await calculateBurnRate(userId, queryYear, queryMonth);
+
+    if (queryYear === now.getFullYear() && queryMonth === now.getMonth() + 1) {
+      await saveAlerts(userId, results);
+    }
 
     res.json({ data: results });
   } catch (error) {

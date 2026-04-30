@@ -16,6 +16,7 @@ import { formatIDR } from '../lib/formatCurrency';
 import TransactionForm from '../components/transactions/TransactionForm';
 import MetricCard from '../components/ui/MetricCard';
 import PageHeader from '../components/ui/PageHeader';
+import { useSelectedPeriod } from '../hooks/useSelectedPeriod';
 import type { TransactionType, TransactionFormData, Transaction } from '../types';
 
 export default function TransactionsPage() {
@@ -24,8 +25,9 @@ export default function TransactionsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
+  const { month, year, label } = useSelectedPeriod();
 
-  const { data: transactions, isLoading } = useTransactions();
+  const { data: transactions, isLoading } = useTransactions({ month, year });
   const { data: categories } = useCategories();
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
@@ -89,9 +91,9 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        eyebrow="Workflow"
+        eyebrow={label}
         title="Transaksi"
-        description="Catat, telusuri, dan review pergerakan uang harianmu. Filter tetap dekat dengan daftar supaya proses cek bulanan terasa cepat."
+        description="Catat, telusuri, dan review pergerakan uang harianmu pada bulan yang sedang aktif. Filter tetap dekat dengan daftar supaya proses cek bulanan terasa cepat."
         action={(
           <button onClick={openAddForm} className="btn-primary">
             <Plus className="h-5 w-5" />
@@ -282,6 +284,8 @@ export default function TransactionsPage() {
         <TransactionForm
           categories={categories}
           transaction={editingTransaction}
+          selectedMonth={month}
+          selectedYear={year}
           onSubmit={editingTransaction ? handleEditTransaction : handleAddTransaction}
           onClose={() => {
             setIsFormOpen(false);

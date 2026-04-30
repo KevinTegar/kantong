@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { supabaseAdmin } from '../lib/supabase';
 import { calculateBurnRate, saveAlerts } from '../lib/burnRateEngine';
 import type { AuthenticatedRequest } from '../middleware/auth';
-import type { TransactionFormData } from '../types';
+import type { AvailableMonth, TransactionFormData } from '../types';
 
 export async function getTransactions(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -40,6 +40,52 @@ export async function getTransactions(req: AuthenticatedRequest, res: Response):
   } catch (error) {
     console.error('Error fetching transactions:', error);
     res.status(500).json({ error: 'Failed to fetch transactions', code: 'INTERNAL_ERROR' });
+  }
+}
+
+export async function getAvailableTransactionMonths(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const userId = req.userId!;
+
+    const { data, error } = await supabaseAdmin()
+      .from('transactions')
+      .select('date')
+      .eq('user_id', userId)
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+
+    const monthMap = new Map<string, AvailableMonth>();
+
+    for (const transaction of data ?? []) {
+      const [yearString, monthString] = transaction.date.split('-');
+      const year = Number(yearString);
+      const month = Number(monthString);
+      const key = `${year}-${month}`;
+
+      const existing = monthMap.get(key);
+
+      if (existing) {
+        existing.transaction_count += 1;
+        continue;
+      }
+
+      monthMap.set(key, {
+        year,
+        month,
+        transaction_count: 1,
+      });
+    }
+
+    const months = Array.from(monthMap.values()).sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+
+    res.json({ data: months });
+  } catch (error) {
+    console.error('Error fetching available transaction months:', error);
+    res.status(500).json({ error: 'Failed to fetch available months', code: 'INTERNAL_ERROR' });
   }
 }
 

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Check, Palette, Pencil, Plus, Tag, Target, Trash2, X } from 'lucide-react';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../hooks/useCategories';
+import { useSelectedPeriod } from '../hooks/useSelectedPeriod';
 import { useCategorySpending } from '../hooks/useDashboardSummary';
 import { formatIDR } from '../lib/formatCurrency';
 import MetricCard from '../components/ui/MetricCard';
@@ -21,9 +22,10 @@ export default function CategoriesPage() {
     color: '#467fae',
     spending_cap: 0,
   });
+  const { month, year, label } = useSelectedPeriod();
 
   const { data: categories, isLoading } = useCategories();
-  const spendingMap = useCategorySpending();
+  const spendingMap = useCategorySpending({ month, year });
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
@@ -91,9 +93,9 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        eyebrow="Budget Control"
+        eyebrow={label}
         title="Kategori"
-        description="Atur kategori sekaligus batas pengeluaran bulanan. Halaman ini dirancang supaya kamu bisa langsung melihat kategori yang sehat, rawan, atau perlu tindakan."
+        description="Atur kategori sekaligus batas pengeluaran bulanan. Halaman ini dirancang supaya kamu bisa langsung melihat kategori yang sehat, rawan, atau perlu tindakan pada periode aktif."
         action={!showForm ? (
           <button onClick={() => setShowForm(true)} className="btn-primary">
             <Plus className="h-5 w-5" />

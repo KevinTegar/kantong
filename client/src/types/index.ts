@@ -66,3 +66,9 @@ export interface CategoryFormData {
   color: string;
   spending_cap: number;
 }
+
+export interface AvailableMonth {
+  year: number;
+  month: number;
+  transaction_count: number;
+}

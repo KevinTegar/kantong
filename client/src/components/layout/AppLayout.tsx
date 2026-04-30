@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useSelectedPeriod } from '../../hooks/useSelectedPeriod';
 import {
   LayoutDashboard,
   Receipt,
@@ -11,6 +12,7 @@ import {
   X,
   Wallet
 } from 'lucide-react';
+import MonthHistorySwitcher from './MonthHistorySwitcher';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -25,6 +27,7 @@ export default function AppLayout() {
   const { signOut, user } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const currentNav = navItems.find((item) => item.path === location.pathname);
+  const { label: selectedPeriodLabel } = useSelectedPeriod();
 
   const handleLogout = async () => {
     await signOut();
@@ -42,8 +45,8 @@ export default function AppLayout() {
             </div>
             <div>
               <p className="text-base font-bold tracking-tight text-dark-900">Kantong</p>
-              <p className="text-[11px] font-medium text-dark-400">
-                {currentNav?.label ?? 'Dashboard'}
+              <p className="max-w-[180px] truncate text-[11px] font-medium text-dark-400">
+                {[currentNav?.label ?? 'Dashboard', selectedPeriodLabel].join(' • ')}
               </p>
             </div>
           </Link>
@@ -102,9 +105,11 @@ export default function AppLayout() {
             </div>
           </div>
           <div className="mt-4 rounded-xl bg-white px-3 py-2 text-xs font-medium text-dark-500 shadow-soft">
-            Fokus bulan ini: pantau cashflow dan budget kategori.
+            Fokus periode aktif: pantau cashflow dan budget kategori.
           </div>
         </div>
+
+        <MonthHistorySwitcher />
 
         {/* Navigation */}
         <nav className="px-1 py-1">
@@ -183,6 +188,10 @@ export default function AppLayout() {
                 Buka dashboard untuk cek cashflow, budget risk, dan transaksi terbaru.
               </p>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <MonthHistorySwitcher />
           </div>
         </div>
 
