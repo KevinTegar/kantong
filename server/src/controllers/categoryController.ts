@@ -1,7 +1,16 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin } from '../lib/supabase';
 import type { AuthenticatedRequest } from '../middleware/auth';
-import type { CategoryFormData } from '../types';
+import {
+  MAX_ICON_LENGTH,
+  MAX_NAME_LENGTH,
+  isCategoryName,
+  isHexColor,
+  isNonNegativeRupiah,
+  isTextUpTo,
+  isUuid,
+  sendInvalid,
+} from '../lib/validation';
 
 export async function getCategories(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -25,15 +34,26 @@ export async function getCategories(req: AuthenticatedRequest, res: Response): P
 export async function createCategory(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const userId = req.userId!;
-    const { name, icon, color, spending_cap } = req.body as CategoryFormData;
+    // Body bisa kosong atau berisi tipe apa saja dari client; jangan percaya bentuknya
+    const { name, icon, color, spending_cap } = (req.body ?? {}) as Record<string, unknown>;
 
-    if (!name || name.trim().length === 0) {
-      res.status(400).json({ error: 'Category name is required', code: 'INVALID_NAME' });
+    if (!isCategoryName(name)) {
+      sendInvalid(res, 'INVALID_NAME', `Category name is required (max ${MAX_NAME_LENGTH} characters)`);
       return;
     }
 
-    if (spending_cap < 0) {
-      res.status(400).json({ error: 'Spending cap cannot be negative', code: 'INVALID_SPENDING_CAP' });
+    if (icon !== undefined && !isTextUpTo(icon, MAX_ICON_LENGTH)) {
+      sendInvalid(res, 'INVALID_ICON', `Icon must be text up to ${MAX_ICON_LENGTH} characters`);
+      return;
+    }
+
+    if (color !== undefined && !isHexColor(color)) {
+      sendInvalid(res, 'INVALID_COLOR', 'Color must be a hex code like #f4c63d');
+      return;
+    }
+
+    if (spending_cap !== undefined && !isNonNegativeRupiah(spending_cap)) {
+      sendInvalid(res, 'INVALID_SPENDING_CAP', 'Spending cap must be a whole number of Rupiah, 0 or more');
       return;
     }
 
@@ -62,15 +82,35 @@ export async function updateCategory(req: AuthenticatedRequest, res: Response): 
   try {
     const userId = req.userId!;
     const { id } = req.params;
-    const { name, icon, color, spending_cap, is_active } = req.body;
+    const { name, icon, color, spending_cap, is_active } = (req.body ?? {}) as Record<string, unknown>;
 
-    if (name !== undefined && name.trim().length === 0) {
-      res.status(400).json({ error: 'Category name cannot be empty', code: 'INVALID_NAME' });
+    if (!isUuid(id)) {
+      sendInvalid(res, 'INVALID_ID', 'Invalid category id');
       return;
     }
 
-    if (spending_cap !== undefined && spending_cap < 0) {
-      res.status(400).json({ error: 'Spending cap cannot be negative', code: 'INVALID_SPENDING_CAP' });
+    if (name !== undefined && !isCategoryName(name)) {
+      sendInvalid(res, 'INVALID_NAME', `Category name cannot be empty (max ${MAX_NAME_LENGTH} characters)`);
+      return;
+    }
+
+    if (icon !== undefined && !isTextUpTo(icon, MAX_ICON_LENGTH)) {
+      sendInvalid(res, 'INVALID_ICON', `Icon must be text up to ${MAX_ICON_LENGTH} characters`);
+      return;
+    }
+
+    if (color !== undefined && !isHexColor(color)) {
+      sendInvalid(res, 'INVALID_COLOR', 'Color must be a hex code like #f4c63d');
+      return;
+    }
+
+    if (spending_cap !== undefined && !isNonNegativeRupiah(spending_cap)) {
+      sendInvalid(res, 'INVALID_SPENDING_CAP', 'Spending cap must be a whole number of Rupiah, 0 or more');
+      return;
+    }
+
+    if (is_active !== undefined && typeof is_active !== 'boolean') {
+      sendInvalid(res, 'INVALID_IS_ACTIVE', 'is_active must be true or false');
       return;
     }
 
@@ -101,6 +141,11 @@ export async function deleteCategory(req: AuthenticatedRequest, res: Response): 
   try {
     const userId = req.userId!;
     const { id } = req.params;
+
+    if (!isUuid(id)) {
+      sendInvalid(res, 'INVALID_ID', 'Invalid category id');
+      return;
+    }
 
     const { error } = await supabaseAdmin()
       .from('categories')
