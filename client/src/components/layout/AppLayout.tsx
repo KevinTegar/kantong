@@ -70,9 +70,10 @@ function NavPills() {
 
   return (
     <nav className="min-w-0 flex-1 overflow-x-auto scrollbar-none lg:flex-none">
+      {/* Di HP navbar mengisi satu baris penuh; tab berbagi ruang sisa supaya tidak terpotong */}
       <div
         ref={navRef}
-        className="relative inline-flex items-center gap-0.5 rounded-full border border-white bg-white/60 p-1 shadow-soft backdrop-blur"
+        className="relative flex w-full items-center gap-0.5 rounded-full border border-white bg-white/60 p-1 shadow-soft backdrop-blur lg:inline-flex lg:w-auto"
       >
         <span
           ref={indicatorRef}
@@ -88,7 +89,7 @@ function NavPills() {
               to={item.path}
               data-active={isActive}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative z-10 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm transition-colors duration-300 ${
+              className={`relative z-10 inline-flex flex-auto items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm transition-colors duration-300 lg:flex-none ${
                 isActive ? 'text-white' : 'text-dark-600 hover:text-dark-900'
               }`}
             >
@@ -114,7 +115,10 @@ export default function AppLayout() {
 
         <div className="order-last flex w-full items-center gap-2 lg:order-none lg:ml-auto lg:w-auto">
           <NavPills />
-          <MonthHistorySwitcher />
+          {/* Di HP pemilih bulan pindah ke label periode di atas judul halaman (PeriodPill) */}
+          <div className="hidden lg:block">
+            <MonthHistorySwitcher />
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

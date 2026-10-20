@@ -11,6 +11,7 @@ import ExpenseShareBar, { type ExpenseShareSegment } from '../components/dashboa
 import MonthSummaryAccordion from '../components/dashboard/MonthSummaryAccordion';
 import MonthlyHistoryPanel from '../components/dashboard/MonthlyHistoryPanel';
 import WeekStrip from '../components/dashboard/WeekStrip';
+import PeriodPill from '../components/layout/PeriodPill';
 import FirstUsePanel from '../components/onboarding/FirstUsePanel';
 import BrandMark from '../components/ui/BrandMark';
 import StatFigure from '../components/ui/StatFigure';
@@ -134,10 +135,7 @@ export default function DashboardPage() {
     <div ref={scope} className="space-y-6">
       <section data-reveal className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="inline-flex items-center gap-2 rounded-full border border-white bg-white/70 px-3 py-1 text-xs font-medium text-dark-600 shadow-soft">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary-400" />
-            {label}
-          </p>
+          <PeriodPill />
           <h1 className="mt-3 text-4xl font-light tracking-tight text-dark-900 lg:text-5xl">
             {getGreeting(new Date().getHours())}, {getDisplayName(user?.email)}
           </h1>

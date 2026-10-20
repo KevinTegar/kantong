@@ -4,14 +4,17 @@ import { useSelectedPeriod } from '../../hooks/useSelectedPeriod';
 import { formatPeriodLabel } from '../../lib/period';
 import Popover from '../ui/Popover';
 
-export default function MonthHistorySwitcher() {
+interface MonthHistorySwitcherProps {
+  align?: 'left' | 'right';
+}
+
+export default function MonthHistorySwitcher({ align = 'right' }: MonthHistorySwitcherProps) {
   const { data: availableMonths } = useAvailableMonths();
   const { month, year, label, isCurrentPeriod, setPeriod, resetToCurrentPeriod } = useSelectedPeriod();
-  // Label ringkas untuk HP, mis. "Okt 2026"
-  const shortLabel = new Date(year, month - 1, 1).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
 
   return (
     <Popover
+      align={align}
       panelClassName="w-72"
       trigger={({ open, toggle }) => (
         <button
@@ -21,8 +24,7 @@ export default function MonthHistorySwitcher() {
           className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-white bg-white/75 px-3.5 text-sm text-dark-800 shadow-soft backdrop-blur transition-colors hover:bg-white"
         >
           <CalendarRange className="h-4 w-4 text-dark-500" />
-          <span className="sm:hidden">{shortLabel}</span>
-          <span className="hidden sm:inline">{label}</span>
+          {label}
           <ChevronDown className={`h-3.5 w-3.5 text-dark-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
       )}

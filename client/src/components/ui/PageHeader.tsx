@@ -1,27 +1,23 @@
 import type { ReactNode } from 'react';
+import PeriodPill from '../layout/PeriodPill';
 
 interface PageHeaderProps {
   title: string;
   description?: string;
-  eyebrow?: string;
+  showPeriod?: boolean;
   action?: ReactNode;
 }
 
 export default function PageHeader({
   title,
   description,
-  eyebrow,
+  showPeriod = false,
   action,
 }: PageHeaderProps) {
   return (
     <div data-reveal className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
       <div className="space-y-3">
-        {eyebrow ? (
-          <p className="inline-flex items-center gap-2 rounded-full border border-white bg-white/70 px-3 py-1 text-xs font-medium text-dark-600 shadow-soft">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary-400" />
-            {eyebrow}
-          </p>
-        ) : null}
+        {showPeriod ? <PeriodPill /> : null}
         <h1 className="text-4xl font-light tracking-tight text-dark-900 lg:text-[44px] lg:leading-[1.1]">
           {title}
         </h1>
