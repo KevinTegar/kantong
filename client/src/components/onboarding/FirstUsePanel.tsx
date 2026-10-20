@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { ArrowRight, Wallet } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -31,16 +31,16 @@ export default function FirstUsePanel({
   return (
     <section className="card overflow-hidden">
       <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="border-b border-dark-200 p-6 lg:border-b-0 lg:border-r lg:p-8">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
-            <span className="h-2 w-2 rounded-full bg-primary-500" />
+        <div className="p-6 lg:p-8">
+          <p className="inline-flex items-center gap-2 rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-800">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
             {eyebrow}
-          </div>
+          </p>
 
-          <h2 className="mt-4 text-2xl font-bold tracking-tight text-dark-900 lg:text-3xl">{title}</h2>
+          <h2 className="mt-4 text-3xl font-light tracking-tight text-dark-900">{title}</h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-dark-500">{description}</p>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
             {actions.map((action) => {
               const Icon = action.icon ?? ArrowRight;
               const className = action.variant === 'secondary' ? 'btn-secondary' : 'btn-primary';
@@ -64,27 +64,20 @@ export default function FirstUsePanel({
           </div>
         </div>
 
-        <div className="bg-dark-50/70 p-6 lg:p-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-primary-700 shadow-soft">
-              <Wallet className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="panel-title">Mulai dengan ringan</p>
-              <p className="panel-caption">Begitu data pertama masuk, dashboard langsung mulai hidup.</p>
-            </div>
-          </div>
+        <div className="m-2 rounded-3xl bg-dark-900 p-6 text-white lg:p-7">
+          <p className="text-sm text-white/90">Mulai dengan ringan</p>
+          <p className="mt-1 text-xs text-white/50">Begitu data pertama masuk, dashboard langsung hidup.</p>
 
-          <div className="mt-5 space-y-3">
+          <ol className="mt-5 space-y-2">
             {highlights.map((highlight, index) => (
-              <div key={highlight} className="surface-muted flex items-start gap-3 p-4">
-                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700">
+              <li key={highlight} className="flex items-start gap-3 rounded-2xl px-1 py-1.5">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-400 text-[11px] font-semibold text-dark-900">
                   {index + 1}
-                </div>
-                <p className="text-sm leading-6 text-dark-600">{highlight}</p>
-              </div>
+                </span>
+                <p className="text-sm leading-6 text-white/75">{highlight}</p>
+              </li>
             ))}
-          </div>
+          </ol>
 
           {aside ? <div className="mt-4">{aside}</div> : null}
         </div>

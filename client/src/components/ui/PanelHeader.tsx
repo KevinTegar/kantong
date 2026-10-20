@@ -1,46 +1,47 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface PanelHeaderProps {
   title: string;
   caption?: string;
   icon?: LucideIcon;
-  tone?: 'default' | 'primary' | 'success' | 'danger' | 'warning';
   aside?: ReactNode;
+  to?: string;
   className?: string;
 }
-
-const toneStyles = {
-  default: 'bg-dark-100 text-dark-600',
-  primary: 'bg-primary-100 text-primary-700',
-  success: 'bg-success-100 text-success-700',
-  danger: 'bg-danger-100 text-danger-600',
-  warning: 'bg-warning-100 text-warning-700',
-};
 
 export default function PanelHeader({
   title,
   caption,
   icon: Icon,
-  tone = 'primary',
   aside,
+  to,
   className = '',
 }: PanelHeaderProps) {
   return (
-    <div className={`flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${className}`}>
-      <div className="flex items-start gap-3">
+    <div className={`flex items-start justify-between gap-4 ${className}`}>
+      <div className="flex min-w-0 items-start gap-3">
         {Icon ? (
-          <div className={`mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl ${toneStyles[tone]}`}>
-            <Icon className="h-5 w-5" />
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-dark-50 text-dark-700">
+            <Icon className="h-4 w-4" />
           </div>
         ) : null}
-        <div>
+        <div className="min-w-0">
           <h3 className="panel-title">{title}</h3>
-          {caption ? <p className="panel-caption mt-1">{caption}</p> : null}
+          {caption ? <p className="panel-caption mt-0.5">{caption}</p> : null}
         </div>
       </div>
 
-      {aside ? <div className="sm:flex-shrink-0">{aside}</div> : null}
+      <div className="flex flex-shrink-0 items-center gap-2">
+        {aside}
+        {to ? (
+          <Link to={to} className="icon-btn h-8 w-8" aria-label={`Buka ${title}`}>
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        ) : null}
+      </div>
     </div>
   );
 }

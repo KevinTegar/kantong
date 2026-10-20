@@ -1,8 +1,11 @@
 import type { LucideIcon } from 'lucide-react';
+import { formatIDR } from '../../lib/formatCurrency';
+import AnimatedNumber from './AnimatedNumber';
 
 interface MetricCardProps {
   label: string;
-  value: string | number;
+  value: number;
+  format?: 'currency' | 'number';
   description?: string;
   icon?: LucideIcon;
   tone?: 'default' | 'primary' | 'success' | 'danger' | 'warning';
@@ -10,31 +13,17 @@ interface MetricCardProps {
 }
 
 const toneStyles = {
-  default: {
-    iconWrap: 'bg-dark-100 text-dark-600',
-    value: 'text-dark-900',
-  },
-  primary: {
-    iconWrap: 'bg-primary-100 text-primary-700',
-    value: 'text-primary-700',
-  },
-  success: {
-    iconWrap: 'bg-success-100 text-success-700',
-    value: 'text-success-700',
-  },
-  danger: {
-    iconWrap: 'bg-danger-100 text-danger-600',
-    value: 'text-danger-600',
-  },
-  warning: {
-    iconWrap: 'bg-warning-100 text-warning-700',
-    value: 'text-warning-700',
-  },
+  default: { iconWrap: 'bg-dark-50 text-dark-700', value: 'text-dark-900' },
+  primary: { iconWrap: 'bg-primary-100 text-primary-800', value: 'text-dark-900' },
+  success: { iconWrap: 'bg-success-50 text-success-700', value: 'text-dark-900' },
+  danger: { iconWrap: 'bg-danger-50 text-danger-600', value: 'text-danger-600' },
+  warning: { iconWrap: 'bg-orange-50 text-orange-600', value: 'text-dark-900' },
 };
 
 export default function MetricCard({
   label,
   value,
+  format = 'number',
   description,
   icon: Icon,
   tone = 'default',
@@ -43,22 +32,21 @@ export default function MetricCard({
   const styles = toneStyles[tone];
 
   return (
-    <div className={`card p-5 ${className}`}>
+    <div data-reveal className={`card p-5 ${className}`}>
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-dark-400">{label}</p>
-          <p className={`mt-2 text-2xl font-bold tracking-tight ${styles.value}`}>{value}</p>
-          {description ? (
-            <p className="mt-2 text-sm leading-6 text-dark-500">{description}</p>
-          ) : null}
-        </div>
-
+        <p className="text-sm text-dark-500">{label}</p>
         {Icon ? (
-          <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${styles.iconWrap}`}>
-            <Icon className="h-5 w-5" />
+          <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${styles.iconWrap}`}>
+            <Icon className="h-4 w-4" />
           </div>
         ) : null}
       </div>
+      <p className={`mt-3 text-[28px] font-light leading-none tracking-tight ${styles.value}`}>
+        <AnimatedNumber value={value} format={format === 'currency' ? formatIDR : undefined} />
+      </p>
+      {description ? (
+        <p className="mt-3 text-xs leading-5 text-dark-500">{description}</p>
+      ) : null}
     </div>
   );
 }

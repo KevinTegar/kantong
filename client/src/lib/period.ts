@@ -23,6 +23,15 @@ export function isSamePeriod(a: PeriodValue, b: PeriodValue) {
   return a.month === b.month && a.year === b.year;
 }
 
+export function getDaysInMonth({ month, year }: PeriodValue) {
+  return new Date(year, month, 0).getDate();
+}
+
+// Minggu dihitung dari tanggal 1 (1-7 = minggu ke-1), sama seperti Burn Rate Engine
+export function getWeekOfMonth(day: number) {
+  return Math.ceil(day / 7);
+}
+
 export function buildPeriodDate(period: PeriodValue, day: number) {
   const maxDay = new Date(period.year, period.month, 0).getDate();
   const safeDay = Math.min(day, maxDay);

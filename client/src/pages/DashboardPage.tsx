@@ -1,379 +1,223 @@
 import { useMemo } from 'react';
-import {
-  ArrowRight,
-  PiggyBank,
-  Plus,
-  ShieldAlert,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Bell, PiggyBank, Plus, Receipt, Tags } from 'lucide-react';
 import AlertBanner from '../components/alerts/AlertBanner';
 import SpendingChart from '../components/charts/SpendingChart';
 import CategoryPieChart from '../components/charts/CategoryPieChart';
+import BalanceCard from '../components/dashboard/BalanceCard';
+import BudgetChecklist, { type BudgetItem } from '../components/dashboard/BudgetChecklist';
+import BudgetGauge from '../components/dashboard/BudgetGauge';
+import DailySpendBars from '../components/dashboard/DailySpendBars';
+import ExpenseShareBar, { type ExpenseShareSegment } from '../components/dashboard/ExpenseShareBar';
+import MonthSummaryAccordion from '../components/dashboard/MonthSummaryAccordion';
 import MonthlyHistoryPanel from '../components/dashboard/MonthlyHistoryPanel';
+import WeekStrip from '../components/dashboard/WeekStrip';
 import FirstUsePanel from '../components/onboarding/FirstUsePanel';
-import PanelHeader from '../components/ui/PanelHeader';
-import SummaryCard from '../components/ui/SummaryCard';
-import PageHeader from '../components/ui/PageHeader';
-import CategoryProgressList from '../components/transactions/CategoryProgressList';
-import { useSelectedPeriod } from '../hooks/useSelectedPeriod';
+import BrandMark from '../components/ui/BrandMark';
+import StatFigure from '../components/ui/StatFigure';
 import { useAvailableMonths } from '../hooks/useAvailableMonths';
-import { useCategorySpending, useDashboardSummary } from '../hooks/useDashboardSummary';
+import { useBurnRate } from '../hooks/useBurnRate';
 import { useCategories } from '../hooks/useCategories';
+import { useCategorySpending, useDashboardSummary } from '../hooks/useDashboardSummary';
+import { useSelectedPeriod } from '../hooks/useSelectedPeriod';
+import { useStaggerReveal } from '../hooks/useStaggerReveal';
 import { useTransactions } from '../hooks/useTransactions';
-import { formatIDR } from '../lib/formatCurrency';
+import { getBudgetLevel } from '../lib/budgetStatus';
+import { getDaysInMonth, getWeekOfMonth } from '../lib/period';
+import { useAuthStore } from '../store/useAuthStore';
+
+function getGreeting(hour: number) {
+  if (hour < 11) return 'Selamat pagi';
+  if (hour < 15) return 'Selamat siang';
+  if (hour < 18) return 'Selamat sore';
+  return 'Selamat malam';
+}
+
+function getDisplayName(email: string | undefined) {
+  const handle = email?.split('@')[0]?.split(/[._-]/)[0] ?? '';
+  return handle ? handle.charAt(0).toUpperCase() + handle.slice(1) : 'kamu';
+}
 
 export default function DashboardPage() {
-  const { month, year, label } = useSelectedPeriod();
+  const user = useAuthStore((state) => state.user);
+  const { month, year, label, isCurrentPeriod } = useSelectedPeriod();
   const { totalIncome, totalExpense, balance, isLoading } = useDashboardSummary({ month, year });
   const { data: transactions } = useTransactions({ month, year });
   const { data: availableMonths } = useAvailableMonths();
   const { data: categories } = useCategories();
+  const { data: burnRateResults } = useBurnRate({ month, year });
   const categorySpending = useCategorySpending({ month, year });
   const isFirstUse = !isLoading && (availableMonths?.length ?? 0) === 0 && (transactions?.length ?? 0) === 0;
+  const scope = useStaggerReveal([isLoading, isFirstUse]);
 
-  const spentRatio = totalIncome > 0 ? Math.min(100, (totalExpense / totalIncome) * 100) : 0;
+  const daysInMonth = getDaysInMonth({ month, year });
+  const weeksInMonth = getWeekOfMonth(daysInMonth);
+  const todayDay = isCurrentPeriod ? new Date().getDate() : null;
+  const weeksElapsed = todayDay !== null ? Math.max(1, getWeekOfMonth(todayDay)) : weeksInMonth;
 
-  const budgetStatus = balance >= 0
-    ? 'Arus kas pada periode ini masih aman. Pertahankan ritme pengeluaranmu.'
-    : 'Pengeluaran pada periode ini sudah melampaui pemasukan. Prioritaskan kategori penting.';
+  const dailyExpense = useMemo(() => {
+    const daily = Array.from({ length: daysInMonth }, () => 0);
+    for (const transaction of transactions ?? []) {
+      if (transaction.type !== 'expense') continue;
+      const day = Number(transaction.date.split('-')[2]);
+      daily[day - 1] += transaction.amount;
+    }
+    return daily;
+  }, [transactions, daysInMonth]);
 
-  const atRiskCategories = useMemo(() => {
-    if (!categories) return [];
-
-    return categories
+  const budgetItems = useMemo<BudgetItem[]>(() => (
+    (categories ?? [])
       .filter((category) => category.spending_cap > 0)
       .map((category) => {
         const spent = categorySpending.get(category.id) || 0;
         const percentage = (spent / category.spending_cap) * 100;
 
         return {
-          ...category,
+          id: category.id,
+          name: category.name,
+          color: category.color,
           spent,
+          cap: category.spending_cap,
           percentage,
+          level: getBudgetLevel(percentage),
         };
       })
-      .filter((category) => category.percentage >= 70)
       .sort((a, b) => b.percentage - a.percentage)
-      .slice(0, 3);
-  }, [categories, categorySpending]);
+  ), [categories, categorySpending]);
 
-  const recentTransactions = useMemo(
-    () => (transactions ? [...transactions].slice(0, 4) : []),
-    [transactions]
-  );
+  const shareSegments = useMemo<ExpenseShareSegment[]>(() => {
+    const byCategory = new Map<string, number>();
+    for (const transaction of transactions ?? []) {
+      if (transaction.type !== 'expense') continue;
+      const name = transaction.category?.name ?? 'Tanpa kategori';
+      byCategory.set(name, (byCategory.get(name) ?? 0) + transaction.amount);
+    }
 
-  const formatShortDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-    });
+    const sorted = [...byCategory.entries()]
+      .map(([name, value]) => ({ label: name, value }))
+      .sort((a, b) => b.value - a.value);
+    const rest = sorted.slice(2).reduce((total, segment) => total + segment.value, 0);
+
+    return rest > 0 ? [...sorted.slice(0, 2), { label: 'Lainnya', value: rest }] : sorted;
+  }, [transactions]);
+
+  const totalCap = budgetItems.reduce((total, item) => total + item.cap, 0);
+  const totalCappedSpent = budgetItems.reduce((total, item) => total + item.spent, 0);
+  const usedPercentage = totalCap > 0 ? (totalCappedSpent / totalCap) * 100 : null;
+
+  // Proyeksi dari Burn Rate Engine; fallback ke rumus yang sama bila hasil server belum ada
+  const projectedPercentage = useMemo(() => {
+    if (totalCap === 0) return null;
+
+    const results = burnRateResults ?? [];
+    if (results.length > 0) {
+      const projected = results.reduce((total, result) => total + result.projected_total, 0);
+      const caps = results.reduce((total, result) => total + result.spending_cap, 0);
+      return caps > 0 ? (projected / caps) * 100 : null;
+    }
+
+    const weeklyAverage = totalCappedSpent / weeksElapsed;
+    return ((totalCappedSpent + weeklyAverage * (weeksInMonth - weeksElapsed)) / totalCap) * 100;
+  }, [burnRateResults, totalCap, totalCappedSpent, weeksElapsed, weeksInMonth]);
+
+  const activeAlertCount = (burnRateResults ?? []).filter((result) => result.alert_level !== null).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+        <BrandMark className="h-10 w-10 animate-pulse" />
+        <p className="text-sm text-dark-500">Menyiapkan ringkasan {label}...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        eyebrow={label}
-        title="Dashboard"
-        description="Pantau cashflow, budget kategori, dan area pengeluaran yang butuh perhatian tanpa kehilangan konteks bulan yang sedang kamu lihat."
-        action={(
-          <>
-            <Link to="/categories" className="btn-secondary">
-              <PiggyBank className="h-5 w-5" />
-              Kelola Budget
-            </Link>
-            <Link to="/transactions" className="btn-primary">
-              <Plus className="h-5 w-5" />
-              Tambah Transaksi
-            </Link>
-          </>
-        )}
-      />
-
-      {isFirstUse ? (
-        <FirstUsePanel
-          eyebrow="Mulai Pertama Kali"
-          title="Belum ada transaksi, dan itu tidak apa-apa"
-          description="Kantong akan mulai terasa berguna begitu kamu masukkan satu pemasukan dan satu pengeluaran. Dari situ dashboard, histori bulanan, dan laporan akan otomatis membentuk pola yang bisa kamu baca dari bulan ke bulan."
-          highlights={[
-            'Tambahkan kategori dulu kalau kamu ingin pengeluaran langsung rapi per pos.',
-            'Catat pemasukan pertama, misalnya gaji atau dana masuk lainnya.',
-            'Setelah itu masukkan beberapa pengeluaran supaya ritme cashflow mulai terlihat.',
-          ]}
-          actions={[
-            { label: 'Tambah Transaksi', to: '/transactions', icon: Plus },
-            { label: 'Atur Kategori', to: '/categories', variant: 'secondary', icon: PiggyBank },
-          ]}
-          aside={(
-            <div className="rounded-2xl border border-dashed border-dark-200 bg-white/80 px-4 py-3 text-sm leading-6 text-dark-500">
-              Histori bulanan akan muncul otomatis setelah bulan pertama punya transaksi.
-            </div>
-          )}
-        />
-      ) : null}
-
-      <section className="card overflow-hidden">
-        <div className="grid gap-0 lg:grid-cols-[1.35fr_0.9fr]">
-          <div className="border-b border-dark-200 p-6 lg:border-b-0 lg:border-r lg:p-8">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
-                  <span className="h-2 w-2 rounded-full bg-primary-500" />
-                  Ringkasan {label}
-                </div>
-                <div>
-                  <p className="text-sm text-dark-500">Saldo bersih periode aktif</p>
-                  <h2 className={`mt-2 text-3xl font-bold tracking-tight lg:text-4xl ${
-                    balance >= 0 ? 'text-dark-900' : 'text-danger-600'
-                  }`}>
-                    {formatIDR(balance)}
-                  </h2>
-                </div>
-                <p className="max-w-xl text-sm leading-6 text-dark-500">{budgetStatus}</p>
-              </div>
-              <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
-                balance >= 0 ? 'bg-primary-50 text-primary-700' : 'bg-danger-50 text-danger-600'
-              }`}>
-                <Wallet className="h-7 w-7" />
-              </div>
-            </div>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              <div className="surface-muted p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-dark-400">Pemasukan</p>
-                <p className="mt-2 text-lg font-bold text-success-700">{formatIDR(totalIncome)}</p>
-              </div>
-              <div className="surface-muted p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-dark-400">Pengeluaran</p>
-                <p className="mt-2 text-lg font-bold text-danger-700">{formatIDR(totalExpense)}</p>
-              </div>
-              <div className="surface-muted p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-dark-400">Rasio Terpakai</p>
-                <p className="mt-2 text-lg font-bold text-dark-900">{spentRatio.toFixed(0)}%</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-dark-50/70 p-6 lg:p-8">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-primary-700 shadow-soft">
-                <ShieldAlert className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="panel-title">Fokus berikutnya</p>
-                <p className="panel-caption">Budget yang perlu kamu cek lebih dulu.</p>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              {atRiskCategories.length > 0 ? (
-                atRiskCategories.map((category) => (
-                  <div key={category.id} className="rounded-2xl border border-dark-200 bg-white p-4 shadow-soft">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: category.color }} />
-                          <p className="truncate text-sm font-semibold text-dark-800">{category.name}</p>
-                        </div>
-                        <p className="mt-1 text-xs text-dark-500">
-                          {formatIDR(category.spent)} dari {formatIDR(category.spending_cap)}
-                        </p>
-                      </div>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        category.percentage >= 100
-                          ? 'bg-danger-50 text-danger-700'
-                          : category.percentage >= 85
-                            ? 'bg-warning-50 text-warning-700'
-                            : 'bg-primary-50 text-primary-700'
-                      }`}>
-                        {category.percentage.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="mt-3 h-2 rounded-full bg-dark-100">
-                      <div
-                        className={`h-full rounded-full ${
-                          category.percentage >= 100
-                            ? 'bg-danger-500'
-                            : category.percentage >= 85
-                              ? 'bg-warning-500'
-                              : 'bg-primary-500'
-                        }`}
-                        style={{ width: `${Math.min(category.percentage, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed border-dark-200 bg-white/80 p-5 text-sm leading-6 text-dark-500">
-                  Belum ada kategori yang mendekati batas. Kondisi budget kamu masih cukup sehat.
-                </div>
-              )}
-            </div>
-          </div>
+    <div ref={scope} className="space-y-6">
+      <section data-reveal className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="inline-flex items-center gap-2 rounded-full border border-white bg-white/70 px-3 py-1 text-xs font-medium text-dark-600 shadow-soft">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary-400" />
+            {label}
+          </p>
+          <h1 className="mt-3 text-4xl font-light tracking-tight text-dark-900 lg:text-5xl">
+            {getGreeting(new Date().getHours())}, {getDisplayName(user?.email)}
+          </h1>
+        </div>
+        <div className="flex gap-8 lg:gap-10">
+          <StatFigure value={transactions?.length ?? 0} label="Transaksi" icon={Receipt} />
+          <StatFigure value={categories?.length ?? 0} label="Kategori" icon={Tags} />
+          <StatFigure value={activeAlertCount} label="Alert" icon={Bell} />
         </div>
       </section>
 
-      {!isFirstUse ? <AlertBanner /> : null}
+      <ExpenseShareBar
+        segments={shareSegments}
+        totalExpense={totalExpense}
+        spendRatio={totalIncome > 0 ? (totalExpense / totalIncome) * 100 : null}
+      />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <SummaryCard
-          title="Pemasukan"
-          value={formatIDR(totalIncome)}
-          icon={TrendingUp}
-          variant="income"
-          note="Dana masuk yang sudah tercatat pada periode aktif."
-        />
-        <SummaryCard
-          title="Pengeluaran"
-          value={formatIDR(totalExpense)}
-          icon={TrendingDown}
-          variant="expense"
-          note="Total uang keluar dari seluruh transaksi."
-        />
-        <SummaryCard
-          title="Sisa Cashflow"
-          value={formatIDR(Math.max(balance, 0))}
-          icon={PiggyBank}
-          variant="budget"
-          note="Ruang aman yang masih tersedia setelah pengeluaran."
-        />
-      </div>
-
-      {!isFirstUse ? <MonthlyHistoryPanel /> : null}
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Link
-          to="/transactions"
-          className="card flex items-center justify-between p-5 transition-transform duration-200 hover:-translate-y-0.5"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-success-100 text-success-700">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-dark-800">Pemasukan</p>
-              <p className="text-sm text-dark-500">Catat uang masuk baru</p>
-            </div>
-          </div>
-          <ArrowRight className="h-5 w-5 text-dark-400" />
-        </Link>
-
-        <Link
-          to="/transactions"
-          className="card flex items-center justify-between p-5 transition-transform duration-200 hover:-translate-y-0.5"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-danger-100 text-danger-600">
-              <TrendingDown className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-dark-800">Pengeluaran</p>
-              <p className="text-sm text-dark-500">Masukkan transaksi pengeluaran</p>
-            </div>
-          </div>
-          <ArrowRight className="h-5 w-5 text-dark-400" />
-        </Link>
-
-        <Link
-          to="/categories"
-          className="card flex items-center justify-between p-5 transition-transform duration-200 hover:-translate-y-0.5"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-100 text-primary-700">
-              <PiggyBank className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-dark-800">Budget</p>
-              <p className="text-sm text-dark-500">Atur spending cap per kategori</p>
-            </div>
-          </div>
-          <ArrowRight className="h-5 w-5 text-dark-400" />
-        </Link>
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
+      {isFirstUse ? (
+        <div data-reveal>
+          <FirstUsePanel
+            eyebrow="Mulai Pertama Kali"
+            title="Belum ada transaksi, dan itu tidak apa-apa"
+            description="Kantong akan mulai terasa berguna begitu kamu masukkan satu pemasukan dan satu pengeluaran. Dari situ dashboard, histori bulanan, dan laporan akan otomatis membentuk pola yang bisa kamu baca dari bulan ke bulan."
+            highlights={[
+              'Tambahkan kategori dulu kalau kamu ingin pengeluaran langsung rapi per pos.',
+              'Catat pemasukan pertama, misalnya gaji atau dana masuk lainnya.',
+              'Setelah itu masukkan beberapa pengeluaran supaya ritme cashflow mulai terlihat.',
+            ]}
+            actions={[
+              { label: 'Tambah Transaksi', to: '/transactions', icon: Plus },
+              { label: 'Atur Kategori', to: '/categories', variant: 'secondary', icon: PiggyBank },
+            ]}
+          />
         </div>
       ) : null}
 
-      {!isLoading && !isFirstUse ? (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.15fr]">
+        <BalanceCard
+          balance={balance}
+          income={totalIncome}
+          expense={totalExpense}
+          periodLabel={label}
+        />
+        <DailySpendBars
+          daily={dailyExpense}
+          todayDay={todayDay}
+          weeklyAverage={totalExpense / weeksElapsed}
+        />
+        <BudgetGauge
+          usedPercentage={usedPercentage}
+          projectedPercentage={projectedPercentage}
+          totalCap={totalCap}
+          totalSpent={totalCappedSpent}
+        />
+        <BudgetChecklist items={budgetItems} className="md:row-span-2" />
+        <MonthSummaryAccordion
+          transactions={transactions ?? []}
+          burnRateResults={burnRateResults ?? []}
+          className="xl:self-start"
+        />
+        <WeekStrip
+          key={`${year}-${month}`}
+          transactions={transactions ?? []}
+          month={month}
+          year={year}
+          todayDay={todayDay}
+          className="md:col-span-2"
+        />
+      </div>
+
+      {!isFirstUse ? <AlertBanner /> : null}
+
+      {!isFirstUse ? (
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <SpendingChart />
           <CategoryPieChart />
         </div>
       ) : null}
 
-      {!isLoading && !isFirstUse ? (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="card p-5 lg:p-6">
-            <PanelHeader
-              title="Progress Budget"
-              caption="Lihat kategori yang paling cepat menghabiskan cap."
-              className="mb-5"
-              aside={(
-                <Link to="/categories" className="text-sm font-semibold text-primary-700 hover:text-primary-800">
-                  Kelola
-                </Link>
-              )}
-            />
-            <CategoryProgressList />
-          </div>
-
-          <div className="card p-5 lg:p-6">
-            <PanelHeader
-              title="Transaksi Terbaru"
-              caption="Snapshot singkat untuk aktivitas terakhir."
-              className="mb-5"
-              aside={(
-                <Link to="/transactions" className="text-sm font-semibold text-primary-700 hover:text-primary-800">
-                  Lihat semua
-                </Link>
-              )}
-            />
-
-            {recentTransactions.length > 0 ? (
-              <div className="space-y-3">
-                {recentTransactions.map((transaction) => (
-                  <div key={transaction.id} className="surface-muted flex items-center justify-between gap-3 p-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
-                        transaction.type === 'income'
-                          ? 'bg-success-100 text-success-700'
-                          : 'bg-danger-100 text-danger-600'
-                      }`}>
-                        {transaction.type === 'income' ? (
-                          <TrendingUp className="h-5 w-5" />
-                        ) : (
-                          <TrendingDown className="h-5 w-5" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-dark-800">
-                          {transaction.description || (transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran')}
-                        </p>
-                        <p className="truncate text-xs text-dark-500">
-                          {[transaction.category?.name || 'Tanpa kategori', formatShortDate(transaction.date)].join(' • ')}
-                        </p>
-                      </div>
-                    </div>
-                    <div className={`text-right text-sm font-bold ${
-                      transaction.type === 'income' ? 'text-success-700' : 'text-danger-600'
-                    }`}>
-                      {transaction.type === 'income' ? '+' : '-'}{formatIDR(transaction.amount)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="surface-muted p-5 text-sm leading-6 text-dark-500">
-                Belum ada transaksi terbaru. Tambahkan transaksi pertama untuk mulai membaca ritme uangmu.
-              </div>
-            )}
-          </div>
-        </div>
-      ) : null}
+      {!isFirstUse ? <MonthlyHistoryPanel /> : null}
     </div>
   );
 }

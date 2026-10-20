@@ -1,4 +1,7 @@
 import { TrendingUp, AlertCircle } from 'lucide-react';
+import { formatIDR } from '../../lib/formatCurrency';
+import ProgressBar from '../ui/ProgressBar';
+import AlertBadge from './AlertBadge';
 import type { BurnRateResult } from '../../types';
 
 interface AlertCardProps {
@@ -6,30 +9,9 @@ interface AlertCardProps {
 }
 
 const levelConfig = {
-  WATCH: {
-    bg: 'bg-primary-50 border-primary-200',
-    iconBg: 'bg-primary-100',
-    iconColor: 'text-primary-600',
-    bar: 'bg-primary-400',
-    badge: 'bg-primary-100 text-primary-700',
-    badgeText: 'Watch',
-  },
-  WARNING: {
-    bg: 'bg-warning-50 border-warning-200',
-    iconBg: 'bg-warning-100',
-    iconColor: 'text-warning-600',
-    bar: 'bg-warning-500',
-    badge: 'bg-warning-100 text-warning-700',
-    badgeText: 'Peringatan',
-  },
-  DANGER: {
-    bg: 'bg-danger-50 border-danger-200',
-    iconBg: 'bg-danger-100',
-    iconColor: 'text-danger-600',
-    bar: 'bg-danger-500',
-    badge: 'bg-danger-100 text-danger-700',
-    badgeText: 'Darurat',
-  },
+  WATCH: { iconWrap: 'bg-amber-50 text-amber-600', bar: 'bg-amber-500' },
+  WARNING: { iconWrap: 'bg-orange-50 text-orange-600', bar: 'bg-orange-500' },
+  DANGER: { iconWrap: 'bg-red-50 text-red-600', bar: 'bg-red-500' },
 };
 
 export default function AlertCard({ result }: AlertCardProps) {
@@ -41,40 +23,24 @@ export default function AlertCard({ result }: AlertCardProps) {
   const Icon = alert_level === 'DANGER' ? AlertCircle : TrendingUp;
 
   return (
-    <div className={`rounded-2xl border p-4 transition-all ${config.bg}`}>
-      <div className="flex items-start gap-4">
-        <div className={`rounded-2xl p-2.5 ${config.iconBg}`}>
-          <Icon className={`w-5 h-5 ${config.iconColor}`} />
+    <div className="card-solid p-4">
+      <div className="flex items-start gap-3">
+        <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${config.iconWrap}`}>
+          <Icon className="h-4 w-4" />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center flex-wrap gap-2 mb-2">
-            <span className="font-semibold text-dark-900">{category_name}</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.badge}`}>
-              {config.badgeText}
-            </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate font-medium text-dark-900">{category_name}</span>
+            <AlertBadge level={alert_level} />
           </div>
-          <p className="text-sm text-dark-500 mb-3">
-            Diproyeksikan mencapai <span className="font-semibold text-dark-700">{percentage_projected.toFixed(0)}%</span> dari budget
+          <p className="mt-1 text-sm text-dark-500">
+            Diproyeksikan mencapai{' '}
+            <span className="font-medium text-dark-800">{percentage_projected.toFixed(0)}%</span> dari budget
           </p>
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-dark-400">
-              <span>Progress</span>
-              <span>{percentage_projected.toFixed(0)}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-dark-200">
-              <div
-                className={`h-full ${config.bar} transition-all duration-500`}
-                style={{ width: `${Math.min(100, percentage_projected)}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-dark-400">
-                Proyeksi: Rp {projected_total.toLocaleString('id-ID')}
-              </span>
-              <span className="text-dark-400">
-                Budget: Rp {spending_cap.toLocaleString('id-ID')}
-              </span>
-            </div>
+          <ProgressBar value={percentage_projected} barClassName={config.bar} className="mt-3 h-1.5 bg-dark-100" />
+          <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-dark-400">
+            <span>Proyeksi {formatIDR(projected_total)}</span>
+            <span>Budget {formatIDR(spending_cap)}</span>
           </div>
         </div>
       </div>

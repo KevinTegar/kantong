@@ -41,6 +41,7 @@ export function useCreateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['transactionMonths'] });
       queryClient.invalidateQueries({ queryKey: ['burnRate'] });
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
   });
 }
@@ -57,6 +58,7 @@ export function useUpdateTransaction() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['transactionMonths'] });
       queryClient.invalidateQueries({ queryKey: ['burnRate'] });
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
   });
 }
@@ -72,6 +74,7 @@ export function useDeleteTransaction() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['transactionMonths'] });
       queryClient.invalidateQueries({ queryKey: ['burnRate'] });
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
   });
 }

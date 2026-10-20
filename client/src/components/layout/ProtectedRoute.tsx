@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
+import BrandMark from '../ui/BrandMark';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,10 +12,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isInitialized) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-dark-50">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
-          <p className="text-sm font-medium text-dark-500">Memuat sesi dan akses halaman...</p>
+          <BrandMark className="h-10 w-10 animate-pulse" />
+          <p className="text-sm text-dark-500">Memuat sesi dan akses halaman...</p>
         </div>
       </div>
     );
