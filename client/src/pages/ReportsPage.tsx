@@ -108,7 +108,7 @@ export default function ReportsPage() {
   return (
     <div ref={scope} className="space-y-6">
       <PageHeader
-        eyebrow={label}
+        showPeriod
         title="Laporan"
         description="Pola pengeluaran, komposisi kategori, dan efisiensi budget untuk bulan yang sedang aktif."
       />

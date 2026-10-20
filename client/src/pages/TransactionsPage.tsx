@@ -133,7 +133,7 @@ export default function TransactionsPage() {
   return (
     <div ref={scope} className="space-y-6">
       <PageHeader
-        eyebrow={label}
+        showPeriod
         title="Transaksi"
         action={(
           <>
