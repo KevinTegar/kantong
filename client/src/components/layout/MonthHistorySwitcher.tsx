@@ -1,90 +1,84 @@
-import { CalendarRange, History } from 'lucide-react';
-import { useMemo } from 'react';
+import { CalendarRange, Check, ChevronDown, History } from 'lucide-react';
 import { useAvailableMonths } from '../../hooks/useAvailableMonths';
 import { useSelectedPeriod } from '../../hooks/useSelectedPeriod';
 import { formatPeriodLabel } from '../../lib/period';
-
-function buildOptionValue(month: number, year: number) {
-  return `${year}-${String(month).padStart(2, '0')}`;
-}
+import Popover from '../ui/Popover';
 
 export default function MonthHistorySwitcher() {
   const { data: availableMonths } = useAvailableMonths();
   const { month, year, label, isCurrentPeriod, setPeriod, resetToCurrentPeriod } = useSelectedPeriod();
-
-  const selectedValue = buildOptionValue(month, year);
-
-  const selectedHasData = useMemo(
-    () => (availableMonths ?? []).some((period) => period.month === month && period.year === year),
-    [availableMonths, month, year]
-  );
-
-  const latestHistory = availableMonths?.[0];
+  // Label ringkas untuk HP, mis. "Okt 2026"
+  const shortLabel = new Date(year, month - 1, 1).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
 
   return (
-    <div className="rounded-2xl border border-dark-200 bg-white p-4 shadow-soft">
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-100 text-primary-700">
-          <CalendarRange className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-400">
-            Periode Aktif
-          </p>
-          <p className="mt-1 text-sm font-semibold text-dark-800">{label}</p>
-          <p className="mt-1 text-xs leading-5 text-dark-500">
-            {selectedHasData
-              ? 'Semua ringkasan, chart, dan daftar transaksi mengikuti periode aktif.'
-              : 'Periode aktif ini belum punya transaksi. Kamu tetap bisa pindah ke histori yang sudah terisi.'}
-          </p>
-        </div>
-      </div>
+    <Popover
+      panelClassName="w-72"
+      trigger={({ open, toggle }) => (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
+          className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-white bg-white/75 px-3.5 text-sm text-dark-800 shadow-soft backdrop-blur transition-colors hover:bg-white"
+        >
+          <CalendarRange className="h-4 w-4 text-dark-500" />
+          <span className="sm:hidden">{shortLabel}</span>
+          <span className="hidden sm:inline">{label}</span>
+          <ChevronDown className={`h-3.5 w-3.5 text-dark-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      )}
+    >
+      {(close) => (
+        <div>
+          <p className="eyebrow px-3 pb-2 pt-2">Periode aktif</p>
 
-      <div className="mt-4 space-y-3">
-        <div className="relative">
-          <select
-            value={selectedHasData ? selectedValue : ''}
-            onChange={(event) => {
-              const value = event.target.value;
-              if (!value) return;
+          {(availableMonths?.length ?? 0) > 0 ? (
+            <ul className="max-h-72 space-y-0.5 overflow-y-auto">
+              {(availableMonths ?? []).map((period) => {
+                const isActive = period.month === month && period.year === year;
 
-              const [selectedYear, selectedMonth] = value.split('-');
-              setPeriod(Number(selectedMonth), Number(selectedYear));
-            }}
-            className="input min-h-[48px] pr-10 text-sm"
-          >
-            <option value="" disabled>
-              {(availableMonths?.length ?? 0) > 0
-                ? 'Pilih bulan yang sudah punya data'
-                : 'Histori muncul setelah ada transaksi'}
-            </option>
-            {(availableMonths ?? []).map((period) => (
-              <option key={buildOptionValue(period.month, period.year)} value={buildOptionValue(period.month, period.year)}>
-                {formatPeriodLabel(period)} ({period.transaction_count} transaksi)
-              </option>
-            ))}
-          </select>
-        </div>
+                return (
+                  <li key={`${period.year}-${period.month}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPeriod(period.month, period.year);
+                        close();
+                      }}
+                      className={`flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors ${
+                        isActive ? 'bg-dark-900 text-white' : 'text-dark-700 hover:bg-dark-50'
+                      }`}
+                    >
+                      <span>{formatPeriodLabel(period)}</span>
+                      <span className={`flex items-center gap-1.5 text-xs ${isActive ? 'text-white/70' : 'text-dark-400'}`}>
+                        {period.transaction_count} transaksi
+                        {isActive ? <Check className="h-3.5 w-3.5 text-primary-400" /> : null}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="px-3 pb-3 text-sm leading-6 text-dark-500">
+              Histori muncul setelah ada transaksi.
+            </p>
+          )}
 
-        <div className="flex flex-col gap-2">
           {!isCurrentPeriod ? (
-            <button type="button" onClick={resetToCurrentPeriod} className="btn-secondary w-full justify-center">
-              <History className="h-4 w-4" />
-              Kembali ke Bulan Ini
-            </button>
-          ) : null}
-
-          {!selectedHasData && latestHistory ? (
             <button
               type="button"
-              onClick={() => setPeriod(latestHistory.month, latestHistory.year)}
-              className="btn-ghost w-full justify-center text-sm"
+              onClick={() => {
+                resetToCurrentPeriod();
+                close();
+              }}
+              className="btn-secondary mt-2 w-full"
             >
-              Lihat histori terbaru
+              <History className="h-4 w-4" />
+              Kembali ke bulan ini
             </button>
           ) : null}
         </div>
-      </div>
-    </div>
+      )}
+    </Popover>
   );
 }

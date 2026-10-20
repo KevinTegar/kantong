@@ -1,34 +1,21 @@
-import { AlertTriangle, CheckCheck } from 'lucide-react';
+import { CheckCheck } from 'lucide-react';
 import { useBurnRate } from '../../hooks/useBurnRate';
+import { useMarkAllAlertsRead } from '../../hooks/useAlerts';
 import { useSelectedPeriod } from '../../hooks/useSelectedPeriod';
 import AlertCard from './AlertCard';
-import { api } from '../../lib/api';
 
 export default function AlertBanner() {
   const { month, year, isCurrentPeriod } = useSelectedPeriod();
-  const { data: burnRateResults, isLoading, refetch } = useBurnRate({ month, year });
+  const { data: burnRateResults, isLoading } = useBurnRate({ month, year });
+  const markAllRead = useMarkAllAlertsRead();
 
   const activeAlerts = burnRateResults?.filter((r) => r.alert_level !== null) ?? [];
 
-  const handleMarkAllRead = async () => {
-    try {
-      await api.put('/alerts/read-all');
-      refetch();
-    } catch (error) {
-      console.error('Failed to mark all alerts as read:', error);
-    }
-  };
-
   if (isLoading) {
     return (
-      <div className="card p-4 animate-pulse">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-dark-200 rounded-xl" />
-          <div className="flex-1">
-            <div className="h-4 bg-dark-200 rounded w-1/3 mb-2" />
-            <div className="h-3 bg-dark-200 rounded w-2/3" />
-          </div>
-        </div>
+      <div className="card animate-pulse p-5">
+        <div className="h-4 w-1/3 rounded-full bg-dark-100" />
+        <div className="mt-3 h-3 w-2/3 rounded-full bg-dark-100" />
       </div>
     );
   }
@@ -37,63 +24,47 @@ export default function AlertBanner() {
     return null;
   }
 
-  const dangerCount = activeAlerts.filter((a) => a.alert_level === 'DANGER').length;
-  const warningCount = activeAlerts.filter((a) => a.alert_level === 'WARNING').length;
-  const watchCount = activeAlerts.filter((a) => a.alert_level === 'WATCH').length;
+  const counts = [
+    { label: 'Darurat', count: activeAlerts.filter((a) => a.alert_level === 'DANGER').length, dot: 'bg-red-500' },
+    { label: 'Peringatan', count: activeAlerts.filter((a) => a.alert_level === 'WARNING').length, dot: 'bg-orange-500' },
+    { label: 'Watch', count: activeAlerts.filter((a) => a.alert_level === 'WATCH').length, dot: 'bg-amber-500' },
+  ].filter((item) => item.count > 0);
 
   return (
-    <div className="card overflow-hidden">
-      <div className="border-b border-dark-200 bg-warning-50/70 px-6 py-5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-warning-100 text-warning-700">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="panel-title">Burn Rate Alert</h3>
-              <p className="panel-caption">
-                {isCurrentPeriod
-                  ? `${activeAlerts.length} peringatan aktif yang perlu ditinjau.`
-                  : `${activeAlerts.length} hasil proyeksi dari periode yang sedang kamu lihat.`}
-              </p>
-            </div>
+    <section data-reveal className="card p-5 lg:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="panel-title">Burn rate alert</h3>
+          <p className="panel-caption mt-0.5">
+            {isCurrentPeriod
+              ? `${activeAlerts.length} kategori diproyeksikan mendekati atau melewati cap.`
+              : `${activeAlerts.length} hasil proyeksi dari periode yang sedang kamu lihat.`}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {counts.map((item) => (
+              <span key={item.label} className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs text-dark-600 shadow-soft">
+                <span className={`h-1.5 w-1.5 rounded-full ${item.dot}`} />
+                {item.count} {item.label}
+              </span>
+            ))}
           </div>
-          <button
-            onClick={handleMarkAllRead}
-            className="inline-flex items-center gap-2 rounded-xl border border-warning-200 bg-white px-3 py-2 text-sm font-semibold text-warning-700 transition-colors hover:bg-warning-50"
-          >
-            <CheckCheck className="h-4 w-4" />
-            Tandai dibaca
-          </button>
         </div>
+        <button
+          type="button"
+          onClick={() => markAllRead.mutate()}
+          disabled={markAllRead.isPending}
+          className="btn-secondary self-start"
+        >
+          <CheckCheck className="h-4 w-4" />
+          Tandai dibaca
+        </button>
       </div>
 
-      <div className="flex divide-x divide-dark-200 border-b border-dark-200">
-        {dangerCount > 0 && (
-          <div className="flex-1 px-4 py-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-danger-500" />
-            <span className="text-sm font-medium text-danger-600">{dangerCount} Darurat</span>
-          </div>
-        )}
-        {warningCount > 0 && (
-          <div className="flex-1 px-4 py-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-warning-500" />
-            <span className="text-sm font-medium text-warning-600">{warningCount} Peringatan</span>
-          </div>
-        )}
-        {watchCount > 0 && (
-          <div className="flex-1 px-4 py-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary-400" />
-            <span className="text-sm font-medium text-primary-600">{watchCount} Watch</span>
-          </div>
-        )}
-      </div>
-
-      <div className="p-4 space-y-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
         {activeAlerts.map((result) => (
           <AlertCard key={result.category_id} result={result} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }

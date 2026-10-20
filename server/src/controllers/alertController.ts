@@ -2,14 +2,20 @@ import { Request, Response } from 'express';
 import { supabaseAdmin } from '../lib/supabase';
 import { calculateBurnRate, saveAlerts } from '../lib/burnRateEngine';
 import type { AuthenticatedRequest } from '../middleware/auth';
+import { isUuid, parsePeriod, sendInvalid } from '../lib/validation';
 
 export async function getBurnRate(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const userId = req.userId!;
-    const { month, year } = req.query;
+    const period = parsePeriod(req.query);
+
+    if (!period) {
+      sendInvalid(res, 'INVALID_PERIOD', 'Month must be 1-12 and year 2000-2100');
+      return;
+    }
+
     const now = new Date();
-    const queryYear = year ? Number(year) : now.getFullYear();
-    const queryMonth = month ? Number(month) : now.getMonth() + 1;
+    const { year: queryYear, month: queryMonth } = period;
 
     const results = await calculateBurnRate(userId, queryYear, queryMonth);
 
@@ -52,6 +58,11 @@ export async function markAlertRead(req: AuthenticatedRequest, res: Response): P
   try {
     const userId = req.userId!;
     const alertId = req.params.id;
+
+    if (!isUuid(alertId)) {
+      sendInvalid(res, 'INVALID_ID', 'Invalid alert id');
+      return;
+    }
 
     const { error } = await supabaseAdmin()
       .from('alerts')

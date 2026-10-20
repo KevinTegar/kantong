@@ -10,6 +10,7 @@ import CategoriesPage from './pages/CategoriesPage';
 import ReportsPage from './pages/ReportsPage';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
+import BrandMark from './components/ui/BrandMark';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,10 +30,10 @@ function App() {
 
   if (!isInitialized) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-dark-50">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-full border-2 border-primary-500 border-t-transparent animate-spin" />
-          <p className="text-sm font-medium text-dark-500">Menyiapkan workspace kamu...</p>
+          <BrandMark className="h-10 w-10 animate-pulse" />
+          <p className="text-sm text-dark-500">Menyiapkan workspace kamu...</p>
         </div>
       </div>
     );

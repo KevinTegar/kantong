@@ -16,7 +16,7 @@ function DeltaBadge({
 }) {
   if (value === null) {
     return (
-      <div className="rounded-xl border border-dark-200 bg-white/80 px-3 py-2">
+      <div className="rounded-2xl border border-dark-100 bg-white/80 px-3 py-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-dark-400">{label}</p>
         <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-dark-500">
           <Minus className="h-3.5 w-3.5" />
@@ -40,7 +40,7 @@ function DeltaBadge({
   const Icon = isNeutral ? Minus : isPositive ? ArrowUpRight : ArrowDownRight;
 
   return (
-    <div className="rounded-xl border border-dark-200 bg-white/80 px-3 py-2">
+    <div className="rounded-2xl border border-dark-100 bg-white/80 px-3 py-2">
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-dark-400">{label}</p>
       <div className={`mt-1 flex items-center gap-2 text-xs font-semibold ${tone}`}>
         <Icon className="h-3.5 w-3.5" />
@@ -65,23 +65,23 @@ function MiniTrendBars({
   const expenseWidth = maxExpense > 0 ? Math.max(10, (expense / maxExpense) * 100) : 0;
 
   return (
-    <div className="mt-4 rounded-xl border border-dark-200 bg-white/80 p-3">
+    <div className="mt-4 rounded-2xl border border-dark-100 bg-white/80 p-3">
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-dark-400">Visual cepat</p>
       <div className="mt-3 space-y-2.5">
         <div className="flex items-center gap-3">
           <span className="w-20 flex-shrink-0 text-xs font-medium text-dark-500">Pemasukan</span>
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-success-100">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-primary-100">
             <div
-              className="h-full rounded-full bg-success-500 transition-all duration-500"
+              className="h-full rounded-full bg-primary-400 transition-all duration-500"
               style={{ width: `${incomeWidth}%` }}
             />
           </div>
         </div>
         <div className="flex items-center gap-3">
           <span className="w-20 flex-shrink-0 text-xs font-medium text-dark-500">Pengeluaran</span>
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-danger-100">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-dark-100">
             <div
-              className="h-full rounded-full bg-danger-500 transition-all duration-500"
+              className="h-full rounded-full bg-dark-900 transition-all duration-500"
               style={{ width: `${expenseWidth}%` }}
             />
           </div>
@@ -100,9 +100,9 @@ export default function MonthlyHistoryPanel() {
   }), [summaries]);
 
   return (
-    <div className="card p-5 lg:p-6">
+    <div data-reveal className="card p-5 lg:p-6">
       <PanelHeader
-        title="Riwayat Bulanan"
+        title="Riwayat bulanan"
         caption="Bandingkan ritme cashflow dari bulan-bulan yang sudah punya data."
         icon={History}
         className="mb-5"
@@ -141,7 +141,7 @@ export default function MonthlyHistoryPanel() {
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-dark-400">
                     {summary.label}
                   </p>
-                  <p className={`mt-2 text-lg font-bold tracking-tight ${
+                  <p className={`mt-2 text-2xl font-light tracking-tight ${
                     summary.balance >= 0 ? 'text-dark-900' : 'text-danger-600'
                   }`}>
                     {formatIDR(summary.balance)}
@@ -157,11 +157,11 @@ export default function MonthlyHistoryPanel() {
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3 text-dark-500">
                   <span>Pemasukan</span>
-                  <span className="font-semibold text-success-700">{formatIDR(summary.totalIncome)}</span>
+                  <span className="font-medium text-dark-900">{formatIDR(summary.totalIncome)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 text-dark-500">
                   <span>Pengeluaran</span>
-                  <span className="font-semibold text-danger-600">{formatIDR(summary.totalExpense)}</span>
+                  <span className="font-medium text-dark-900">{formatIDR(summary.totalExpense)}</span>
                 </div>
               </div>
 

@@ -1,18 +1,13 @@
-import { useState } from 'react';
-import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../store/useAuthStore';
-import { useSelectedPeriod } from '../../hooks/useSelectedPeriod';
-import {
-  LayoutDashboard,
-  Receipt,
-  Tags,
-  BarChart3,
-  LogOut,
-  Menu,
-  X,
-  Wallet
-} from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
+import { Link, useLocation, Outlet } from 'react-router-dom';
+import { BarChart3, LayoutDashboard, Receipt, Tags } from 'lucide-react';
+import { gsap, prefersReducedMotion } from '../../lib/motion';
+import NotificationsMenu from '../alerts/NotificationsMenu';
+import QuickAddTransaction from '../transactions/QuickAddTransaction';
+import BrandMark from '../ui/BrandMark';
+import Toaster from '../ui/Toaster';
 import MonthHistorySwitcher from './MonthHistorySwitcher';
+import UserMenu from './UserMenu';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -21,221 +16,119 @@ const navItems = [
   { path: '/reports', label: 'Laporan', icon: BarChart3 },
 ];
 
-export default function AppLayout() {
+function NavPills() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { signOut, user } = useAuthStore();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const currentNav = navItems.find((item) => item.path === location.pathname);
-  const { label: selectedPeriodLabel } = useSelectedPeriod();
+  const navRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+  const hasPositioned = useRef(false);
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/login');
-  };
+  // Indikator hitam bergeser ke tab aktif, seperti segmented nav di Coterie
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const indicator = indicatorRef.current;
+    if (!nav || !indicator) return;
+
+    const active = nav.querySelector<HTMLElement>('[data-active="true"]');
+    if (!active) {
+      gsap.set(indicator, { autoAlpha: 0 });
+      return;
+    }
+
+    // On narrow screens the nav scrolls horizontally; keep the active tab in view
+    const scroller = nav.parentElement;
+    if (scroller && scroller.scrollWidth > scroller.clientWidth) {
+      scroller.scrollTo({
+        left: active.offsetLeft - (scroller.clientWidth - active.offsetWidth) / 2,
+        behavior: hasPositioned.current ? 'smooth' : 'auto',
+      });
+    }
+
+    const target = { x: active.offsetLeft, width: active.offsetWidth, autoAlpha: 1 };
+    if (!hasPositioned.current || prefersReducedMotion()) {
+      gsap.set(indicator, target);
+      hasPositioned.current = true;
+      return;
+    }
+
+    gsap.to(indicator, { ...target, duration: 0.5, ease: 'power3.inOut', overwrite: true });
+  }, [location.pathname]);
+
+  // Keep the indicator aligned when the web font loads or the nav resizes
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const observer = new ResizeObserver(() => {
+      const active = nav.querySelector<HTMLElement>('[data-active="true"]');
+      if (active && indicatorRef.current) {
+        gsap.set(indicatorRef.current, { x: active.offsetLeft, width: active.offsetWidth });
+      }
+    });
+    observer.observe(nav);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-transparent">
-      {/* Mobile Header */}
-      <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/70 bg-white/85 backdrop-blur-xl lg:hidden">
-        <div className="flex h-16 items-center justify-between px-4">
-          <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-600 shadow-soft">
-              <Wallet className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-base font-bold tracking-tight text-dark-900">Kantong</p>
-              <p className="max-w-[180px] truncate text-[11px] font-medium text-dark-400">
-                {[currentNav?.label ?? 'Dashboard', selectedPeriodLabel].join(' • ')}
-              </p>
-            </div>
-          </Link>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-dark-200 text-dark-600 transition-colors hover:bg-dark-50"
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+    <nav className="min-w-0 flex-1 overflow-x-auto scrollbar-none lg:flex-none">
+      <div
+        ref={navRef}
+        className="relative inline-flex items-center gap-0.5 rounded-full border border-white bg-white/60 p-1 shadow-soft backdrop-blur"
+      >
+        <span
+          ref={indicatorRef}
+          aria-hidden="true"
+          className="invisible absolute left-0 top-1 h-[calc(100%-0.5rem)] rounded-full bg-dark-900 shadow-soft"
+        />
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              data-active={isActive}
+              aria-current={isActive ? 'page' : undefined}
+              className={`relative z-10 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm transition-colors duration-300 ${
+                isActive ? 'text-white' : 'text-dark-600 hover:text-dark-900'
+              }`}
+            >
+              <item.icon className="h-3.5 w-3.5" />
+              {/* Di layar kecil hanya tab aktif yang menampilkan label */}
+              <span className={isActive ? '' : 'sr-only sm:not-sr-only'}>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+export default function AppLayout() {
+  return (
+    <div className="min-h-screen">
+      <header className="mx-auto flex max-w-[1320px] flex-wrap items-center gap-x-2 gap-y-3 px-4 pt-5 lg:flex-nowrap lg:px-8">
+        <Link to="/dashboard" className="mr-auto flex items-center gap-2 lg:mr-6">
+          <BrandMark className="h-6 w-6" />
+          <span className="text-lg font-medium tracking-tight text-dark-900">Kantong</span>
+        </Link>
+
+        <div className="order-last flex w-full items-center gap-2 lg:order-none lg:ml-auto lg:w-auto">
+          <NavPills />
+          <MonthHistorySwitcher />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <QuickAddTransaction />
+          <NotificationsMenu />
+          <UserMenu />
         </div>
       </header>
 
-      {/* Mobile Overlay */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-dark-900/35 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Mobile Sidebar */}
-      <aside
-        className={`fixed left-0 top-0 z-50 h-full w-80 border-r border-white/70 bg-white/95 px-4 pb-4 pt-5 shadow-elevated backdrop-blur-xl transition-transform duration-300 ease-in-out lg:hidden ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="mb-6 flex items-center justify-between border-b border-dark-200 pb-5">
-          <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 shadow-soft">
-              <Wallet className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="text-lg font-bold tracking-tight text-dark-900">Kantong</p>
-              <p className="text-xs text-dark-400">Money control workspace</p>
-            </div>
-          </Link>
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-dark-200 text-dark-500 transition-colors hover:bg-dark-50"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* User Info */}
-        <div className="mb-5 rounded-2xl border border-dark-200 bg-dark-50 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 text-sm font-semibold text-white">
-              {user?.email?.[0]?.toUpperCase() || 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-dark-800 truncate">
-                {user?.email?.split('@')[0] || 'User'}
-              </p>
-              <p className="text-xs text-dark-500 truncate">{user?.email}</p>
-            </div>
-          </div>
-        </div>
-
-        <MonthHistorySwitcher />
-
-        {/* Navigation */}
-        <nav className="px-1 py-1">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-400">
-            Navigasi
-          </p>
-          <ul className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <li key={item.path}>
-                  <Link
-                    to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200 ${
-                      isActive
-                        ? 'bg-primary-600 text-white shadow-soft'
-                        : 'text-dark-600 hover:bg-dark-50'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span className="font-semibold">{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {/* Footer */}
-        <div className="absolute bottom-4 left-4 right-4 border-t border-dark-200 pt-4">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-dark-500 transition-colors hover:bg-danger-50 hover:text-danger-600"
-          >
-            <LogOut className="h-5 w-5" />
-            <span className="font-semibold">Keluar</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Desktop Sidebar */}
-      <aside className="hidden border-r border-white/80 bg-white/90 backdrop-blur-xl lg:fixed lg:inset-y-0 lg:flex lg:w-[292px] lg:flex-col">
-        {/* Logo */}
-        <div className="flex h-24 items-center border-b border-dark-200 px-6">
-          <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-600 shadow-soft">
-              <Wallet className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-dark-900">Kantong</h1>
-              <p className="text-xs font-medium text-dark-400">Focused money tracker</p>
-            </div>
-          </Link>
-        </div>
-
-        {/* User Profile */}
-        <div className="px-4 py-5">
-          <div className="rounded-2xl border border-dark-200 bg-dark-50 p-4 shadow-soft">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 text-sm font-semibold text-white">
-              {user?.email?.[0]?.toUpperCase() || 'U'}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-dark-800">
-                  {user?.email?.split('@')[0] || 'User'}
-                </p>
-                <p className="truncate text-xs text-dark-500">{user?.email}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <MonthHistorySwitcher />
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-4 py-2">
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-dark-400">
-            Navigasi
-          </p>
-          <ul className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <li key={item.path}>
-                  <Link
-                    to={item.path}
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200 ${
-                      isActive
-                        ? 'bg-primary-600 text-white shadow-soft'
-                        : 'text-dark-600 hover:bg-dark-50'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span className="font-semibold">{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {/* Footer */}
-        <div className="border-t border-dark-200 p-4">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-dark-500 transition-colors hover:bg-danger-50 hover:text-danger-600"
-          >
-            <LogOut className="h-5 w-5" />
-            <span className="font-semibold">Keluar</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content - Desktop */}
-      <div className="hidden lg:block lg:ml-[292px]">
-        <main className="min-h-screen px-8 py-8 xl:px-10">
-          <div className="mx-auto max-w-[1200px]">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-
-      {/* Main Content - Mobile */}
-      <div className="min-h-screen px-4 pb-6 pt-20 lg:hidden">
+      <main className="mx-auto max-w-[1320px] px-4 pb-20 pt-6 lg:px-8 lg:pt-8">
         <Outlet />
-      </div>
+      </main>
+
+      <Toaster />
     </div>
   );
 }

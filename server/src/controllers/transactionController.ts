@@ -2,16 +2,54 @@ import { Request, Response } from 'express';
 import { supabaseAdmin } from '../lib/supabase';
 import { calculateBurnRate, saveAlerts } from '../lib/burnRateEngine';
 import type { AuthenticatedRequest } from '../middleware/auth';
-import type { AvailableMonth, TransactionFormData } from '../types';
+import type { AvailableMonth } from '../types';
+import {
+  MAX_DESCRIPTION_LENGTH,
+  isIsoDate,
+  isPositiveRupiah,
+  isTextUpTo,
+  isTransactionType,
+  isUuid,
+  parsePeriod,
+  sendInvalid,
+} from '../lib/validation';
+
+// service_role melewati RLS, jadi kepemilikan kategori harus dicek eksplisit.
+// Kategori yang sudah di-soft-delete tetap sah supaya transaksi lama masih bisa diedit.
+async function isOwnCategory(userId: string, categoryId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin()
+    .from('categories')
+    .select('id')
+    .eq('id', categoryId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data !== null;
+}
 
 export async function getTransactions(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const userId = req.userId!;
-    const { month, year, category_id, type } = req.query;
+    const { category_id, type } = req.query;
+    const period = parsePeriod(req.query);
 
-    const now = new Date();
-    const queryYear = year ? Number(year) : now.getFullYear();
-    const queryMonth = month ? Number(month) : now.getMonth() + 1;
+    if (!period) {
+      sendInvalid(res, 'INVALID_PERIOD', 'Month must be 1-12 and year 2000-2100');
+      return;
+    }
+
+    if (category_id !== undefined && !isUuid(category_id)) {
+      sendInvalid(res, 'INVALID_CATEGORY', 'Invalid category id');
+      return;
+    }
+
+    if (type !== undefined && !isTransactionType(type)) {
+      sendInvalid(res, 'INVALID_TYPE', 'Invalid transaction type');
+      return;
+    }
+
+    const { year: queryYear, month: queryMonth } = period;
 
     const startDate = `${queryYear}-${String(queryMonth).padStart(2, '0')}-01`;
     const daysInMonth = new Date(queryYear, queryMonth, 0).getDate();
@@ -92,15 +130,31 @@ export async function getAvailableTransactionMonths(req: AuthenticatedRequest, r
 export async function createTransaction(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const userId = req.userId!;
-    const { category_id, amount, type, description, date } = req.body as TransactionFormData;
+    // Body bisa kosong atau berisi tipe apa saja dari client; jangan percaya bentuknya
+    const { category_id, amount, type, description, date } = (req.body ?? {}) as Record<string, unknown>;
 
-    if (!amount || amount <= 0) {
-      res.status(400).json({ error: 'Amount must be greater than 0', code: 'INVALID_AMOUNT' });
+    if (!isPositiveRupiah(amount)) {
+      sendInvalid(res, 'INVALID_AMOUNT', 'Amount must be a positive whole number of Rupiah');
       return;
     }
 
-    if (!['income', 'expense'].includes(type)) {
-      res.status(400).json({ error: 'Invalid transaction type', code: 'INVALID_TYPE' });
+    if (!isTransactionType(type)) {
+      sendInvalid(res, 'INVALID_TYPE', 'Invalid transaction type');
+      return;
+    }
+
+    if (date !== undefined && date !== null && !isIsoDate(date)) {
+      sendInvalid(res, 'INVALID_DATE', 'Date must be a valid YYYY-MM-DD date');
+      return;
+    }
+
+    if (description !== undefined && description !== null && !isTextUpTo(description, MAX_DESCRIPTION_LENGTH)) {
+      sendInvalid(res, 'INVALID_DESCRIPTION', `Description must be text up to ${MAX_DESCRIPTION_LENGTH} characters`);
+      return;
+    }
+
+    if (category_id && !(isUuid(category_id) && await isOwnCategory(userId, category_id))) {
+      sendInvalid(res, 'INVALID_CATEGORY', 'Category not found');
       return;
     }
 
@@ -136,10 +190,25 @@ export async function updateTransaction(req: AuthenticatedRequest, res: Response
   try {
     const userId = req.userId!;
     const { id } = req.params;
-    const { amount, description, date, category_id } = req.body;
+    const { amount, description, date, category_id } = (req.body ?? {}) as Record<string, unknown>;
 
-    if (amount !== undefined && amount <= 0) {
-      res.status(400).json({ error: 'Amount must be greater than 0', code: 'INVALID_AMOUNT' });
+    if (!isUuid(id)) {
+      sendInvalid(res, 'INVALID_ID', 'Invalid transaction id');
+      return;
+    }
+
+    if (amount !== undefined && !isPositiveRupiah(amount)) {
+      sendInvalid(res, 'INVALID_AMOUNT', 'Amount must be a positive whole number of Rupiah');
+      return;
+    }
+
+    if (date !== undefined && !isIsoDate(date)) {
+      sendInvalid(res, 'INVALID_DATE', 'Date must be a valid YYYY-MM-DD date');
+      return;
+    }
+
+    if (description !== undefined && description !== null && !isTextUpTo(description, MAX_DESCRIPTION_LENGTH)) {
+      sendInvalid(res, 'INVALID_DESCRIPTION', `Description must be text up to ${MAX_DESCRIPTION_LENGTH} characters`);
       return;
     }
 
@@ -155,11 +224,16 @@ export async function updateTransaction(req: AuthenticatedRequest, res: Response
       return;
     }
 
+    if (category_id && !(isUuid(category_id) && await isOwnCategory(userId, category_id))) {
+      sendInvalid(res, 'INVALID_CATEGORY', 'Category not found');
+      return;
+    }
+
     const updateData: Record<string, unknown> = {};
     if (amount !== undefined) updateData.amount = amount;
     if (description !== undefined) updateData.description = description;
     if (date !== undefined) updateData.date = date;
-    if (category_id !== undefined) updateData.category_id = category_id;
+    if (category_id !== undefined) updateData.category_id = category_id || null;
 
     const { data, error } = await supabaseAdmin()
       .from('transactions')
@@ -188,6 +262,11 @@ export async function deleteTransaction(req: AuthenticatedRequest, res: Response
   try {
     const userId = req.userId!;
     const { id } = req.params;
+
+    if (!isUuid(id)) {
+      sendInvalid(res, 'INVALID_ID', 'Invalid transaction id');
+      return;
+    }
 
     const { data: existing } = await supabaseAdmin()
       .from('transactions')

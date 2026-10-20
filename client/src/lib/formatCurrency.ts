@@ -7,6 +7,16 @@ export function formatIDR(amount: number): string {
   }).format(amount);
 }
 
+// Versi ringkas untuk ruang sempit (chip kalender, tooltip grafik): "Rp 45 rb", "Rp 1,2 jt"
+export function formatIDRCompact(amount: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(amount);
+}
+
 export function parseIDR(value: string): number {
   const cleaned = value.replace(/[^0-9]/g, '');
   return parseInt(cleaned, 10) || 0;
